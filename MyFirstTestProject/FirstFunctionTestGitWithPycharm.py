@@ -1,7 +1,7 @@
-def PrintHelloGitTenTimes():
-    print('Hello GIT\n'*10)
+def PrintHelloGitTenTimes(CountOfPrint):
+    print('Hello GIT\n'*CountOfPrint)
 
 
 
 if __name__=='__main__':
-    PrintHelloGitTenTimes()
+    PrintHelloGitTenTimes(100)
