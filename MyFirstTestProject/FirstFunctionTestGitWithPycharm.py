@@ -1,6 +1,6 @@
 def PrintHelloGitTenTimes():
-    print('Hello GIT'*10)
-    print('Special with bug')
+    print('Hello GIT\n'*10)
+
 
 
 if __name__=='__main__':
