@@ -49,3 +49,24 @@ query_string - фрагмент URL после ?
 remote_addr - IP адрес пользователя
 content_length - длина тела запроса
 Http_cokie - заголовок cokie
+
+FASTCGI и SCGI
+чтобы решить проблему - программа будет являться демоном.
+Происходит не запуск целого приложения а вызов функции
+Веб приложения запускается в виде отдельного процесса
+
+WSGI
+современный подход - приложение должно запускаться в одном
+Этот протокол специфичен для python
+Это приложение запускается в нутри application server
+далее запускаются функции внутри приложения
+def wsgi_application(environ, start_response):
+#бизнес логика
+status='200 OK'
+headers = [
+    ('Content-Type', 'text/plain')
+    ]
+body = 'Hello, world!'
+start_response (status,headers)
+return [body]
+
