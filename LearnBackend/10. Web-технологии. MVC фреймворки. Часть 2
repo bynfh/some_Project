@@ -1,0 +1,18 @@
+10. Web-технологии. MVC фреймворки. Часть 2 | Технострим
+Django views
+views.py
+Контроллеры в django - это обычные функции, которые request response
+
+# /blog/post_text/?id=123
+def post_text(request):
+    try:
+        id = request.GET.get('id')
+        obj = Post.objects.get(pk=id)
+    except Post.DoesNotExist:
+        raise Http404
+    return HttpResponse (obj.text,
+             content_type = 'text/plain')
+Захват парамтров из URL
+#blog/urls.py
+url(r'^category/(\d+)/$', 'category_view')
+url(r'^(?<pk>\d+)/$', 'post_detail')
