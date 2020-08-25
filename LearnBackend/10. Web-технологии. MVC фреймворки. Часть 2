@@ -57,6 +57,5 @@ return render(request, 'blog/post_details.html', {
 
 context processors
 Это функции которые вызываются перед отрисовкой шаблона и могут добавить данных в контекст
-тест branch ubuntu desktop
 
 
