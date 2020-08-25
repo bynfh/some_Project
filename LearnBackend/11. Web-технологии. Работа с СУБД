@@ -1,6 +1,0 @@
-данный урок я пролистал быстро, потому что кажется, что я тут хорошо
-ориентируюсь
-./manage.py validate - check mistake in logic
-./manage.py syncdb - create table in DB (1 times)
-./manage.py shell - run python shell
-./manage.py dbshell run client DB
