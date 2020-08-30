@@ -7,14 +7,6 @@ import requests
 import time
 from aiohttp import web
 import pprint
-#################################LOG################################
-logging.basicConfig(filename='Api_wallet.log',
-                    format='%(asctime)s %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO,
-                    datefmt='%m/%d/%Y %I:%M:%S %p',
-                    filemode='w'
-                    )
-logger = logging.getLogger('Api_wallet')
 ##############################ARGPARSE##############################
 parser = argparse.ArgumentParser(description='API_Wallet')
 parser.add_argument('--period', default=1, type=int,
@@ -25,16 +17,37 @@ parser.add_argument('--usd', default=0, type=int,
                     help='Value is usds, default = 0')
 parser.add_argument('--eur', default=0, type=int,
                     help='Value is eurs, default = 0')
+parser.add_argument('--debug', default=0, type=str,
+                    help='Type or no into console, default = False')
 args = parser.parse_args()
-logger.info('You cash:EUR = {EUR}, USD = {USD}, RUB = {RUB}, period = {period}'.format(EUR = args.eur,
-                                                                                       USD = args.usd,
-                                                                                       RUB = args.rub,
-                                                                                       period = args.period))
-
 ##############################CONSTANT##############################
 table = {}
 URL = 'https://www.cbr-xml-daily.ru/daily_json.js'
 TimesPerMinute = args.period * 60
+DebugOn = ['1', 'true', 'True', 'y', 'Y']
+#################################LOG################################
+FORMAT = '%(asctime)s %(name)s - %(levelname)s - %(message)s'
+if args.debug in DebugOn:
+    logging.basicConfig(level=logging.DEBUG, format=FORMAT,
+                        filename='Api_wallet.log',
+                        datefmt='%m/%d/%Y %I:%M:%S %p',
+                        filemode='w'
+                        )
+else:
+    logging.basicConfig(level=logging.INFO, format=FORMAT,
+                        filename='Api_wallet.log',
+                        datefmt='%m/%d/%Y %I:%M:%S %p',
+                        filemode='w'
+                        )
+# logging.getLogger().addHandler(file_handler)
+# # чтобы предупреждение про selectors не показывало
+# logging.getLogger('asyncio').setLevel(logging.INFO)
+logger = logging.getLogger('Api_wallet')
+logger.info('You cash:EUR = {EUR}, USD = {USD},'
+                    ' RUB = {RUB}, period = {period}'.format(EUR = args.eur,
+                                                             USD = args.usd,
+                                                             RUB = args.rub,
+                                                             period = args.period))
 ##############################Functions#############################
 async def get_data_about_course(session,url):
     logger.error('RUN get_data_about_course')
