@@ -33,9 +33,9 @@ file_handler.setFormatter(logging.Formatter(FORMAT))
 
 # уровень логгинга (DEBUG или INFO)
 if args.debug in DebugOn:
-    logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y/%m/%d/ %H:%M:%S')
 else:
-    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt='%Y/%m/%d/ %H:%M:%S')
 
 logging.getLogger().addHandler(file_handler)
 ##############################Functions#############################
