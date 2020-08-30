@@ -33,11 +33,12 @@ file_handler.setFormatter(logging.Formatter(FORMAT))
 
 # уровень логгинга (DEBUG или INFO)
 if args.debug in DebugOn:
-    logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y/%m/%d/ %H:%M:%S')
+    logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y/%m/%d %H:%M:%S')
 else:
-    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt='%Y/%m/%d/ %H:%M:%S')
+    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt='%Y/%m/%d %H:%M:%S')
 
 logging.getLogger().addHandler(file_handler)
+logging.getLogger('asyncio').setLevel(logging.INFO)
 ##############################Functions#############################
 async def get_data_about_course(session,url):
     logging.debug('WORK Function get_data_about_course')
@@ -59,7 +60,7 @@ async def get_data_about_course(session,url):
                     for valuteY in json_response['Valute']:
                         table[valuteX + '-' + valuteY] = json_response['Valute'][valuteX]['Value'] \
                                                          / json_response['Valute'][valuteY]['Value']
-                logging.debug('LIST with data about exchanges :{table}'.format(table=table))
+                #logging.debug('LIST with data about exchanges :{table}'.format(table=table))
             except Exception as error:
                 logging.error('Error in receiving the exchange rate.'
                               'Error description from interpreter:{error}'.format(error=error))
@@ -71,6 +72,24 @@ async def test_print():
         logging.debug('WORK Function test_print')
 
         await asyncio.sleep(5)
+# Routes
+def create_runner():
+    app = web.Application()
+    app.add_routes([
+        web.get('/rub/get', api_get),
+        web.get('/usd/get', api_get),
+        web.get('/eur/get', api_get),
+        web.get('/amount/get', api_get),
+        web.post('/amount/set', api_post),
+        web.post('/modify', api_post)])
+
+    return web.AppRunner(app, access_log_class=AccessLogger)
+# Server
+async def start_server(host='127.0.0.1', port=8080):
+    runner = create_runner()
+    await runner.setup()
+    site = web.TCPSite(runner, host, port)
+    await site.start()
 
 async def main(loop):
     logging.debug('WORK Function main')
@@ -83,6 +102,7 @@ async def main(loop):
 if __name__=="__main__":
     loop = asyncio.get_event_loop()
     tasks = [
+            loop.create_task(start_server()),
             loop.create_task(main(loop)),
             loop.create_task(test_print()),
             ]
