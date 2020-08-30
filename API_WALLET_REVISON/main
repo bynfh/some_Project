@@ -26,31 +26,20 @@ URL = 'https://www.cbr-xml-daily.ru/daily_json.js'
 TimesPerMinute = args.period * 60
 DebugOn = ['1', 'true', 'True', 'y', 'Y']
 #################################LOG################################
-FORMAT = '%(asctime)s %(name)s - %(levelname)s - %(message)s'
+# логирование
+FORMAT = '%(asctime)s [%(levelname)s]: %(message)s'
+file_handler = logging.FileHandler('Api_wallet.log', 'w', encoding='utf-8')
+file_handler.setFormatter(logging.Formatter(FORMAT))
+
+# уровень логгинга (DEBUG или INFO)
 if args.debug in DebugOn:
-    logging.basicConfig(level=logging.DEBUG, format=FORMAT,
-                        filename='Api_wallet.log',
-                        datefmt='%m/%d/%Y %I:%M:%S %p',
-                        filemode='w'
-                        )
+    logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%m/%d/%Y %I:%M:%S %p')
 else:
-    logging.basicConfig(level=logging.INFO, format=FORMAT,
-                        filename='Api_wallet.log',
-                        datefmt='%m/%d/%Y %I:%M:%S %p',
-                        filemode='w'
-                        )
-# logging.getLogger().addHandler(file_handler)
-# # чтобы предупреждение про selectors не показывало
-# logging.getLogger('asyncio').setLevel(logging.INFO)
-logger = logging.getLogger('Api_wallet')
-logger.info('You cash:EUR = {EUR}, USD = {USD},'
-                    ' RUB = {RUB}, period = {period}'.format(EUR = args.eur,
-                                                             USD = args.usd,
-                                                             RUB = args.rub,
-                                                             period = args.period))
+    logging.basicConfig(level=logging.INFO, format=FORMAT, datefmt='%m/%d/%Y %I:%M:%S %p')
+
+logging.getLogger().addHandler(file_handler)
 ##############################Functions#############################
 async def get_data_about_course(session,url):
-    logger.error('RUN get_data_about_course')
     while True:
         async with session.get(url) as response:
             try:
@@ -75,6 +64,7 @@ async def get_data_about_course(session,url):
 
 async def test_print():
     while True:
+        logging.info('WORK Function test_print')
         response = requests.get(URL)
         Course_EUR = 'Hello'
         Course_USD = 'World!!!'
@@ -83,13 +73,13 @@ async def test_print():
         await asyncio.sleep(5)
 
 async def main(loop):
+    logging.info('Aplication [Wallet App] started')
     urls = ["https://www.cbr-xml-daily.ru/daily_json.js"]
     async with aiohttp.ClientSession(loop=loop) as session:
         tasks = [get_data_about_course(session, url) for url in urls]
         await asyncio.gather(*tasks)
 
 if __name__=="__main__":
-    logger.info('RUN main block')
     loop = asyncio.get_event_loop()
     tasks = [
             loop.create_task(main(loop)),
