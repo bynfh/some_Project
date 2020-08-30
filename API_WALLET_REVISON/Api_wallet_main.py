@@ -75,15 +75,15 @@ async def test_print():
 # Routes
 def create_runner():
     app = web.Application()
-    app.add_routes([
-        web.get('/rub/get', api_get),
-        web.get('/usd/get', api_get),
-        web.get('/eur/get', api_get),
-        web.get('/amount/get', api_get),
-        web.post('/amount/set', api_post),
-        web.post('/modify', api_post)])
+    # app.add_routes([
+    #     web.get('/rub/get', api_get),
+    #     web.get('/usd/get', api_get),
+    #     web.get('/eur/get', api_get),
+    #     web.get('/amount/get', api_get),
+    #     web.post('/amount/set', api_post),
+    #     web.post('/modify', api_post)])
 
-    return web.AppRunner(app, access_log_class=AccessLogger)
+    return web.AppRunner(app)
 # Server
 async def start_server(host='127.0.0.1', port=8080):
     runner = create_runner()
