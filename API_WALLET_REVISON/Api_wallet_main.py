@@ -40,6 +40,7 @@ else:
 logging.getLogger().addHandler(file_handler)
 ##############################Functions#############################
 async def get_data_about_course(session,url):
+    logging.debug('WORK Function get_data_about_course')
     while True:
         async with session.get(url) as response:
             try:
@@ -49,13 +50,16 @@ async def get_data_about_course(session,url):
                 logging.error('Error in receiving the exchange rate.'
                               'Error description from interpreter:{error}'.format(error=error))
         if isinstance(json_response, dict) and json_response != {}:
+            logging.info('Data about exchange received successfully')
             try:
+
                 for valuteX in json_response['Valute']:
                     table['RUB' + '-' + valuteX] = 1 / json_response['Valute'][valuteX]['Value']
                     table[valuteX + '-' + 'RUB'] = json_response['Valute'][valuteX]['Value']
                     for valuteY in json_response['Valute']:
                         table[valuteX + '-' + valuteY] = json_response['Valute'][valuteX]['Value'] \
                                                          / json_response['Valute'][valuteY]['Value']
+                logging.debug('LIST with data about exchanges :{table}'.format(table=table))
             except Exception as error:
                 logging.error('Error in receiving the exchange rate.'
                               'Error description from interpreter:{error}'.format(error=error))
@@ -64,15 +68,12 @@ async def get_data_about_course(session,url):
 
 async def test_print():
     while True:
-        logging.info('WORK Function test_print')
-        response = requests.get(URL)
-        Course_EUR = 'Hello'
-        Course_USD = 'World!!!'
-        print (f"{Course_EUR} {Course_USD}".format(Course_EUR=Course_EUR,
-                                                   Course_USD=Course_USD))
+        logging.debug('WORK Function test_print')
+
         await asyncio.sleep(5)
 
 async def main(loop):
+    logging.debug('WORK Function main')
     logging.info('Aplication [Wallet App] started')
     urls = ["https://www.cbr-xml-daily.ru/daily_json.js"]
     async with aiohttp.ClientSession(loop=loop) as session:
