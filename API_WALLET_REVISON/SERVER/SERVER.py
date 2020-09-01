@@ -4,6 +4,7 @@ import aiohttp
 import argparse
 import logging
 import time
+import os
 
 ##############################ARGPARSE##############################
 parser = argparse.ArgumentParser(description='Server')
@@ -13,9 +14,9 @@ args = parser.parse_args()
 ##############################CONSTANT##############################
 DebugOn = ['1', 'true', 'True', 'y', 'Y']
 #################################LOG################################
-logger = logging.getLogger('SERVER')
+logger = logging.getLogger(__name__)
 FORMAT = '%(asctime)s %(name)s [%(levelname)s]: %(message)s'
-file_handler = logging.FileHandler('/home/oleg/PycharmProjects/All_Project/API_WALLET_REVISON/SERVER/Server.log', 'w', encoding='utf-8')
+file_handler = logging.FileHandler(os.path.join( os.path.dirname(__file__), '..' ) + '/Log/Server.log', 'w', encoding='utf-8')
 file_handler.setFormatter(logging.Formatter(FORMAT))
 
 # уровень логгинга (DEBUG или INFO)
