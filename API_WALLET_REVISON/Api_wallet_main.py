@@ -25,6 +25,7 @@ table = {}
 URL = 'https://www.cbr-xml-daily.ru/daily_json.js'
 TimesPerMinute = args.period * 60
 DebugOn = ['1', 'true', 'True', 'y', 'Y']
+InPocket = {'rub':args.rub,'eur':args.eur,'usd':args.usd}
 #################################LOG################################
 logger = logging.getLogger('Api_wallet_main')
 FORMAT = '%(asctime)s  %(name)s [%(levelname)s]: %(message)s'
@@ -60,7 +61,8 @@ async def get_data_about_course(session,url):
                     for valuteY in json_response['Valute']:
                         table[valuteX + '-' + valuteY] = json_response['Valute'][valuteX]['Value'] \
                                                          / json_response['Valute'][valuteY]['Value']
-                #logging.debug('LIST with data about exchanges :{table}'.format(table=table))
+                table['RUB-RUB'] = 1.0
+                logging.debug('LIST with data about exchanges :{table}'.format(table=table['RUB-RUB']))
             except Exception as error:
                 logger.error('Error in receiving the exchange rate.'
                               'Error description from interpreter:{error}'.format(error=error))
@@ -69,8 +71,9 @@ async def get_data_about_course(session,url):
 
 async def test_print():
     while True:
-        logging.debug('WORK Function test_print')
-
+        logging.info('\nRUB:{RUB}\nEUR:{EUR}\nUSD:{USD}'.format(RUB=InPocket.get('rub'),
+                                                                EUR=InPocket.get('eur'),
+                                                                USD=InPocket.get('usd')))
         await asyncio.sleep(5)
 
 async def main(loop):
@@ -80,18 +83,36 @@ async def main(loop):
     async with aiohttp.ClientSession(loop=loop) as session:
         tasks = [get_data_about_course(session, url) for url in urls]
         await asyncio.gather(*tasks)
-async def api_get(request):
-    url = request.url.raw_parts[-2]  # usd, eur или rub
-    url += " TEST GET"
 
+async def api_get(request):
+    TextForResponse = ''
+    summ = {}
+    for key in InPocket:
+        summ[key] = 0
+    url = str(request.url.raw_parts[-2])  # usd, eur или rub
+    if url == 'amount':
+        for valute, cash in InPocket.items():
+            TextForResponse += '{value}:{cash}\n'.format(value=valute, cash=cash)
+            for valute_x, cash_x in InPocket.items():
+                summ[valute] += (cash_x * table[valute_x.upper() + '-' + valute.upper()])
+                logger.info(str(summ))
+        TextForResponse += 'rub-usd:{rub_usd}\n' \
+                           'rub-eur:{rub_eur}\n' \
+                           'eur-usd:{eur_usd}\n'.format(rub_usd=table['USD-RUB'],
+                                                        rub_eur=table['EUR-RUB'],
+                                                        eur_usd=table['EUR-USD'],)
+        TextForResponse += 'sum:'
+        for valute, summ_x in summ.items():
+            TextForResponse += '{summ:.2f} {valute} /'.format(summ=summ_x,valute=valute)
+
+    else:
+        TextForResponse = 'TEST'
     response = web.Response(status=200, reason='ОК',
-                            text=url, charset='utf-8',
+                            text=TextForResponse, charset='utf-8',
                             content_type='text/plain')
     return response
 async def api_post(request):
-
     reason = request.url.raw_parts[-1]  # set или modify
-    reason += ' TEST POST'
 
     return web.Response(status=200, reason='ОК',
                         text=reason,
