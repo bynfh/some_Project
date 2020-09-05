@@ -40,6 +40,7 @@ else:
 
 logger.addHandler(file_handler)
 #logging.getLogger('asyncio').setLevel(logging.INFO)
+logger.debug('Constant, argparse, log successful')
 ##############################Functions#############################
 async def get_data_about_course(session,url):
     logger.debug('WORK Function get_data_about_course')
@@ -54,35 +55,19 @@ async def get_data_about_course(session,url):
         if isinstance(json_response, dict) and json_response != {}:
             logger.info('Data about exchange received successfully')
             try:
-
                 for valuteX in json_response['Valute']:
                     table['RUB' + '-' + valuteX] = 1 / json_response['Valute'][valuteX]['Value']
                     table[valuteX + '-' + 'RUB'] = json_response['Valute'][valuteX]['Value']
                     for valuteY in json_response['Valute']:
                         table[valuteX + '-' + valuteY] = json_response['Valute'][valuteX]['Value'] \
                                                          / json_response['Valute'][valuteY]['Value']
-                table['RUB-RUB'] = 1.0
-                logging.debug('LIST with data about exchanges :{table}'.format(table=table['RUB-RUB']))
+                table['RUB-RUB'] = 1.0 # For full array
+                #logging.debug('LIST with data about exchanges :{table}'.format(table=table['RUB-RUB']))
             except Exception as error:
                 logger.error('Error in receiving the exchange rate.'
                               'Error description from interpreter:{error}'.format(error=error))
             response.close()
         await asyncio.sleep(TimesPerMinute)
-
-async def test_print():
-    while True:
-        logging.info('\nRUB:{RUB}\nEUR:{EUR}\nUSD:{USD}'.format(RUB=InPocket.get('rub'),
-                                                                EUR=InPocket.get('eur'),
-                                                                USD=InPocket.get('usd')))
-        await asyncio.sleep(5)
-
-async def main(loop):
-    logger.debug('WORK Function main')
-    logger.info('Aplication [Wallet App] started')
-    urls = ["https://www.cbr-xml-daily.ru/daily_json.js"]
-    async with aiohttp.ClientSession(loop=loop) as session:
-        tasks = [get_data_about_course(session, url) for url in urls]
-        await asyncio.gather(*tasks)
 
 async def api_get(request):
     TextForResponse = ''
@@ -95,7 +80,6 @@ async def api_get(request):
             TextForResponse += '{value}:{cash}\n'.format(value=valute, cash=cash)
             for valute_x, cash_x in InPocket.items():
                 summ[valute] += (cash_x * table[valute_x.upper() + '-' + valute.upper()])
-                logger.info(str(summ))
         TextForResponse += 'rub-usd:{rub_usd}\n' \
                            'rub-eur:{rub_eur}\n' \
                            'eur-usd:{eur_usd}\n'.format(rub_usd=table['USD-RUB'],
@@ -103,7 +87,7 @@ async def api_get(request):
                                                         eur_usd=table['EUR-USD'],)
         TextForResponse += 'sum:'
         for valute, summ_x in summ.items():
-            TextForResponse += '{summ:.2f} {valute} /'.format(summ=summ_x,valute=valute)
+            TextForResponse += '{summ:.2f} {valute} /'.format(summ=summ_x, valute=valute)
 
     else:
         TextForResponse = 'TEST'
@@ -118,6 +102,7 @@ async def api_post(request):
                         text=reason,
                         charset='utf-8', content_type='text/plain')
 def create_runner():
+    logger.debug('WORK Function create_runner')
     app = web.Application()
     app.add_routes([
         web.get('/rub/get', api_get),
@@ -130,18 +115,26 @@ def create_runner():
     return web.AppRunner(app)
 # Server
 async def start_server(host='127.0.0.1', port=8080):
+    logger.debug('WORK Function start_server')
     runner = create_runner()
     await runner.setup()
     site = web.TCPSite(runner, host, port)
     await site.start()
     logger.info('SERVER START {host}:{port}'.format(host=host, port=port))
 
-if __name__=="__main__":
+async def main(loop):
+    logger.debug('WORK Function main')
+    logger.info('Aplication [Wallet App] started')
+    urls = ["https://www.cbr-xml-daily.ru/daily_json.js"]
+    async with aiohttp.ClientSession(loop=loop) as session:
+        tasks = [get_data_about_course(session, url) for url in urls]
+        await asyncio.gather(*tasks)
+
+if __name__ == "__main__":
     loop = asyncio.get_event_loop()
     tasks = [
             loop.create_task(start_server()),
             loop.create_task(main(loop)),
-            loop.create_task(test_print()),
             ]
     loop.run_until_complete(asyncio.wait(tasks))
     loop.run_forever()
