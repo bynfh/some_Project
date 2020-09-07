@@ -7,6 +7,7 @@ import requests
 import time
 from aiohttp import web
 import pprint
+from Class_wallet import Wallet
 ##############################ARGPARSE##############################
 parser = argparse.ArgumentParser(description='API_Wallet')
 parser.add_argument('--period', default=1, type=int,
@@ -26,6 +27,7 @@ URL = 'https://www.cbr-xml-daily.ru/daily_json.js'
 TimesPerMinute = args.period * 60
 DebugOn = ['1', 'true', 'True', 'y', 'Y']
 InPocket = {'rub':args.rub,'eur':args.eur,'usd':args.usd}
+ClassInitialization = Wallet({'rub':100,'eur':100,'usd':100})
 #################################LOG################################
 logger = logging.getLogger('Api_wallet_main')
 FORMAT = '%(asctime)s  %(name)s [%(levelname)s]: %(message)s'
@@ -153,11 +155,24 @@ async def start_server(host='127.0.0.1', port=8080):
     await site.start()
     logger.info('SERVER START {host}:{port}'.format(host=host, port=port))
 
-# async def print_to_console():
-#     while True:
-#         if table != {}:
-#             logger.info('print to console one times per minute if course or amount is change')
-#         await asyncio.sleep(10)
+async def print_to_console():
+    while True:
+        TextForResponse = ''
+        if table != {}:
+            if ClassInitialization.ChangeCashInPocket(InPocket) is True:
+                CashInPocket = ClassInitialization.DataAboutCashLocal
+                CourseValute = ClassInitialization.DataAboutCourseLocal
+                for valute, cash in CashInPocket.items():
+                    TextForResponse += '{value}:{cash}\n'.format(value=valute, cash=cash)
+
+                TextForResponse += 'rub-usd:{rub_usd:.2f}\n' \
+                                   'rub-eur:{rub_eur:.2f}\n' \
+                                   'eur-usd:{eur_usd:.2f}\n'.format(rub_usd=CourseValute['USD-RUB'],
+                                                                    rub_eur=CourseValute['EUR-RUB'],
+                                                                    eur_usd=CourseValute['EUR-USD'],)
+
+                logger.info('Cash in pocket is change:{data}'.format(data=TextForResponse))
+        await asyncio.sleep(3)
 
 async def main(loop):
     logger.debug('WORK Function main')
@@ -173,6 +188,7 @@ if __name__ == "__main__":
     tasks = [
             loop.create_task(start_server()),
             loop.create_task(main(loop)),
+            loop.create_task(print_to_console()),
             ]
     loop.run_until_complete(asyncio.wait(tasks))
     loop.run_forever()
