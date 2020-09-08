@@ -3,11 +3,26 @@ import aiohttp
 import argparse
 import logging
 import json
+from aiohttp.abc import AbstractAccessLogger
 import requests
 import time
 from aiohttp import web
 import pprint
 from Class_wallet import Wallet
+class AccessLogger(AbstractAccessLogger):
+
+    def log(self, request, response, time):
+
+        if request.method == 'POST':
+            self.logger.debug('Request: ' + str(request.remote) + ' ' +
+                          str(request.method) + ' ' + str(request.path))
+            self.logger.debug('Response code: ' + str(response.status) +
+                              ' | ' + str(response.text))
+
+        elif request.method == 'GET':
+            self.logger.info('Request: ' + str(request.remote) + ' ' +
+                          str(request.method) + ' ' + str(request.path))
+            self.logger.info('Response code: ' + str(response.status))
 ##############################ARGPARSE##############################
 parser = argparse.ArgumentParser(description='API_Wallet')
 parser.add_argument('--period', default=1, type=int,
@@ -27,7 +42,7 @@ URL = 'https://www.cbr-xml-daily.ru/daily_json.js'
 TimesPerMinute = args.period * 60
 DebugOn = ['1', 'true', 'True', 'y', 'Y']
 InPocket = {'rub':args.rub,'eur':args.eur,'usd':args.usd}
-ClassInitialization = Wallet({'rub':100,'eur':100,'usd':100})
+ClassInitialization = Wallet({'rub':args.rub,'eur':args.eur,'usd':args.usd})
 #################################LOG################################
 logger = logging.getLogger('Api_wallet_main')
 FORMAT = '%(asctime)s  %(name)s [%(levelname)s]: %(message)s'
@@ -107,9 +122,8 @@ async def api_get_amount(request):
 async def api_post_set(request):
     reason = ''
     res = await request.content.read()
-    logger.info(type(res))
     try:
-        s = json.loads(res, encoding='utf-8')
+        s = json.loads(res)
         for key, value in s.items():
             InPocket[key] = value
             reason += 'You set {valute}:{value}\n'.format(valute=key, value=value)
@@ -122,9 +136,8 @@ async def api_post_set(request):
 async def api_post_modify(request):
     reason = ''
     res = await request.content.read()
-    logger.info(type(res))
     try:
-        s = json.loads(res, encoding='utf-8')
+        s = json.loads(res)
         for key, value in s.items():
             InPocket[key] += value
             reason += 'You modify {valute}:{value}\n'.format(valute=key, value=value)
@@ -145,8 +158,8 @@ def create_runner():
         web.post('/amount/set', api_post_set),
         web.post('/modify', api_post_modify)])
 
-    return web.AppRunner(app)
-# Server
+    return web.AppRunner(app, access_log_class=AccessLogger)
+# Servers
 async def start_server(host='127.0.0.1', port=8080):
     logger.debug('WORK Function start_server')
     runner = create_runner()
@@ -159,19 +172,21 @@ async def print_to_console():
     while True:
         TextForResponse = ''
         if table != {}:
-            if ClassInitialization.ChangeCashInPocket(InPocket) is True:
+            if ClassInitialization.CheckChangeCashInPocket(InPocket) is True\
+            or ClassInitialization.CheckChangeCourseValute(table):
                 CashInPocket = ClassInitialization.DataAboutCashLocal
                 CourseValute = ClassInitialization.DataAboutCourseLocal
                 for valute, cash in CashInPocket.items():
-                    TextForResponse += '{value}:{cash}\n'.format(value=valute, cash=cash)
+                    TextForResponse += '{value}:{cash} '.format(value=valute, cash=cash)
 
-                TextForResponse += 'rub-usd:{rub_usd:.2f}\n' \
+
+                TextForResponse += '\nrub-usd:{rub_usd:.2f}\n' \
                                    'rub-eur:{rub_eur:.2f}\n' \
                                    'eur-usd:{eur_usd:.2f}\n'.format(rub_usd=CourseValute['USD-RUB'],
                                                                     rub_eur=CourseValute['EUR-RUB'],
                                                                     eur_usd=CourseValute['EUR-USD'],)
 
-                logger.info('Cash in pocket is change:{data}'.format(data=TextForResponse))
+                logger.info('Cash or Curse is change:\n{data}'.format(data=TextForResponse))
         await asyncio.sleep(3)
 
 async def main(loop):
@@ -184,15 +199,18 @@ async def main(loop):
         await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
-    loop = asyncio.get_event_loop()
-    tasks = [
-            loop.create_task(start_server()),
-            loop.create_task(main(loop)),
-            loop.create_task(print_to_console()),
-            ]
-    loop.run_until_complete(asyncio.wait(tasks))
-    loop.run_forever()
-    loop.close()
+    try:
+        loop = asyncio.get_event_loop()
+        tasks = [
+                loop.create_task(start_server()),
+                loop.create_task(main(loop)),
+                loop.create_task(print_to_console()),
+                ]
+        loop.run_until_complete(asyncio.wait(tasks))
+        loop.run_forever()
+        loop.close()
+    except KeyboardInterrupt:
+        logger.debug("You stopped program")
 
 
 
