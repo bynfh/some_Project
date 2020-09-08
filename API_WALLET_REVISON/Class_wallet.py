@@ -18,15 +18,12 @@ class Wallet():
             return True
         else:
             return False
-#тут нужно сделать, что бы ключи создавались в self.DataAboutCourseLocal
+
     def CheckChangeCourseValute(self, DataAboutCourse):
         isChange = False
         assert type(DataAboutCourse) is dict, 'NOT DICT'
         if DataAboutCourse != self.DataAboutCourseLocal:
             self.DataAboutCourseLocal = DataAboutCourse
-            # for key, value in DataAboutCourse.items():
-            #     if self.DataAboutCourseLocal[key] != DataAboutCourse[key]:
-            #         self.DataAboutCourseLocal[key] = DataAboutCourse[key]
             isChange = True
         if isChange is True:
             return True
