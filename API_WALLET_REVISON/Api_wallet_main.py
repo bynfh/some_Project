@@ -173,7 +173,7 @@ async def print_to_console():
         TextForResponse = ''
         if table != {}:
             if ClassInitialization.CheckChangeCashInPocket(InPocket) is True\
-            or ClassInitialization.CheckChangeCourseValute(table):
+            or ClassInitialization.CheckChangeCourseValute(table) is True:
                 CashInPocket = ClassInitialization.DataAboutCashLocal
                 CourseValute = ClassInitialization.DataAboutCourseLocal
                 for valute, cash in CashInPocket.items():

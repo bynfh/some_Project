@@ -11,9 +11,8 @@ class Wallet():
         assert type(DataAboutCash) is dict, 'NOT DICT'
         if DataAboutCash != self.DataAboutCashLocal:
             for key, value in DataAboutCash.items():
-                if self.DataAboutCashLocal[key] != DataAboutCash[key]:
                     self.DataAboutCashLocal[key] = DataAboutCash[key]
-                    isChange = True
+            isChange = True
         if isChange is True:
             return True
         else:
@@ -23,7 +22,8 @@ class Wallet():
         isChange = False
         assert type(DataAboutCourse) is dict, 'NOT DICT'
         if DataAboutCourse != self.DataAboutCourseLocal:
-            self.DataAboutCourseLocal = DataAboutCourse
+            for key, value in DataAboutCourse.items():
+                self.DataAboutCourseLocal[key] = DataAboutCourse[key]
             isChange = True
         if isChange is True:
             return True
