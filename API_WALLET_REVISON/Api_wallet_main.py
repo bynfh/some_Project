@@ -4,11 +4,10 @@ import argparse
 import logging
 import json
 from aiohttp.abc import AbstractAccessLogger
-import requests
-import time
+# import requests
 from aiohttp import web
-import pprint
 from Class_wallet import Wallet
+
 class AccessLogger(AbstractAccessLogger):
 
     def log(self, request, response, time):
@@ -20,9 +19,9 @@ class AccessLogger(AbstractAccessLogger):
                               ' | ' + str(response.text))
 
         elif request.method == 'GET':
-            self.logger.info('Request: ' + str(request.remote) + ' ' +
+            self.logger.debug('Request: ' + str(request.remote) + ' ' +
                           str(request.method) + ' ' + str(request.path))
-            self.logger.info('Response code: ' + str(response.status))
+            self.logger.debug('Response code: ' + str(response.status))
 ##############################ARGPARSE##############################
 parser = argparse.ArgumentParser(description='API_Wallet')
 parser.add_argument('--period', default=1, type=int,
@@ -88,8 +87,7 @@ async def get_data_about_course(session,url):
 
 async def get_values_valute(request):
     url = str(request.url.raw_parts[-2])  # usd, eur или rub
-    TextForResponse = str(InPocket[url])
-    logger.info(url)
+    TextForResponse = url + ':' + str(InPocket[url])
     response = web.Response(status=200, reason='ОК',
                             text=TextForResponse, charset='utf-8',
                             content_type='text/plain')
@@ -112,7 +110,7 @@ async def api_get_amount(request):
                                                         eur_usd=table['EUR-USD'],)
     TextForResponse += 'sum:'
     for valute, summ_x in summ.items():
-        TextForResponse += '{summ:.2f} {valute} /'.format(summ=summ_x, valute=valute)
+        TextForResponse += '{summ:.2f} {valute}|'.format(summ=summ_x, valute=valute)
 
     response = web.Response(status=200, reason='ОК',
                             text=TextForResponse, charset='utf-8',
@@ -169,6 +167,9 @@ async def start_server(host='127.0.0.1', port=8080):
     logger.info('SERVER START {host}:{port}'.format(host=host, port=port))
 
 async def print_to_console():
+    summ = {}
+    for key in InPocket:
+        summ[key] = 0
     while True:
         TextForResponse = ''
         if table != {}:
@@ -178,16 +179,24 @@ async def print_to_console():
                 CourseValute = ClassInitialization.DataAboutCourseLocal
                 for valute, cash in CashInPocket.items():
                     TextForResponse += '{value}:{cash} '.format(value=valute, cash=cash)
-
+                    for valute_x, cash_x in CashInPocket.items():
+                        try:
+                            summ[valute] += (cash_x * table[valute_x.upper() + '-' + valute.upper()])
+                        except KeyError:
+                            logger.debug("Not key in dict :{reason}".format(reason=valute))
 
                 TextForResponse += '\nrub-usd:{rub_usd:.2f}\n' \
                                    'rub-eur:{rub_eur:.2f}\n' \
                                    'eur-usd:{eur_usd:.2f}\n'.format(rub_usd=CourseValute['USD-RUB'],
                                                                     rub_eur=CourseValute['EUR-RUB'],
                                                                     eur_usd=CourseValute['EUR-USD'],)
-
+                TextForResponse += 'sum:'
+                for valute, summ_x in summ.items():
+                    TextForResponse += '{summ:.2f} {valute}|'.format(summ=summ_x, valute=valute)
                 logger.info('Cash or Curse is change:\n{data}'.format(data=TextForResponse))
-        await asyncio.sleep(3)
+                await asyncio.sleep(60)
+        await asyncio.sleep(1)
+
 
 async def main(loop):
     logger.debug('WORK Function main')
@@ -195,7 +204,6 @@ async def main(loop):
     urls = ["https://www.cbr-xml-daily.ru/daily_json.js"]
     async with aiohttp.ClientSession(loop=loop) as session:
         tasks = [get_data_about_course(session, url) for url in urls]
-        # task = print_to_console()
         await asyncio.gather(*tasks)
 
 if __name__ == "__main__":
