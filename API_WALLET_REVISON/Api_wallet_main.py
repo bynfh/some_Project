@@ -81,7 +81,7 @@ async def get_data_about_course(session,url):
                 #logging.debug('LIST with data about exchanges :{table}'.format(table=table['RUB-RUB']))
             except Exception as error:
                 logger.error('Error in receiving the exchange rate.'
-                              'Error description from interpreter:{error}'.format(error=error))
+                             'Error description from interpreter:{error}'.format(error=error))
             response.close()
         await asyncio.sleep(TimesPerMinute)
 
@@ -98,7 +98,7 @@ async def api_get_amount(request):
     summ = {}
     for key in InPocket:
         summ[key] = 0
-
+    # print(ClassInitialization.GetValuesCashInWallet("eur"))
     for valute, cash in InPocket.items():
         TextForResponse += '{value}:{cash}\n'.format(value=valute, cash=cash)
         for valute_x, cash_x in InPocket.items():
@@ -135,6 +135,7 @@ async def api_post_modify(request):
     reason = ''
     res = await request.content.read()
     try:
+        logger.debug("Type of data:{type},data:{data}".format(type=type(res),data=res))
         s = json.loads(res)
         for key, value in s.items():
             InPocket[key] += value

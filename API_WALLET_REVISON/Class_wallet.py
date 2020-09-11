@@ -29,6 +29,19 @@ class Wallet():
             return True
         else:
             return False
+    def GetAmountInAnyValute(self,valute):
+        amount = 0
+        try:
+            for valute_x, cash_x in self.DataAboutCashLocal.items():
+                amount += int((cash_x * self.DataAboutCourseLocal[valute_x.upper() + '-' + valute.upper()]))
+            return amount
+        except KeyError:
+            print("this key is not in dict:{key}".format(key=valute))
+    def GetValuesCashInWallet(self,valute):
+        try:
+            return self.DataAboutCashLocal[valute]
+        except KeyError:
+            print("this key is not in dict:{key}".format(key=valute))
 
 
 
