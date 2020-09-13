@@ -16,7 +16,7 @@ class AccessLogger(AbstractAccessLogger):
             self.logger.debug('Request: ' + str(request.remote) + ' ' +
                           str(request.method) + ' ' + str(request.path))
             self.logger.debug('Response code: ' + str(response.status) +
-                              ' | ' + str(response.text))
+                               ' | ' + str(response.text))
 
         elif request.method == 'GET':
             self.logger.debug('Request: ' + str(request.remote) + ' ' +
@@ -40,15 +40,14 @@ table = {}
 URL = 'https://www.cbr-xml-daily.ru/daily_json.js'
 TimesPerMinute = args.period * 60
 DebugOn = ['1', 'true', 'True', 'y', 'Y']
-InPocket = {'rub':args.rub,'eur':args.eur,'usd':args.usd}
-ClassInitialization = Wallet({'rub':args.rub,'eur':args.eur,'usd':args.usd})
+MyWallet = Wallet({'rub':args.rub, 'eur':args.eur, 'usd':args.usd})
 #################################LOG################################
 logger = logging.getLogger('Api_wallet_main')
 FORMAT = '%(asctime)s  %(name)s [%(levelname)s]: %(message)s'
 file_handler = logging.FileHandler('Api_wallet.log', 'w', encoding='utf-8')
 file_handler.setFormatter(logging.Formatter(FORMAT))
 
-# уровень логгинга (DEBUG или INFO)
+# choose level logging (DEBUG или INFO)
 if args.debug in DebugOn:
     logging.basicConfig(level=logging.DEBUG, format=FORMAT, datefmt='%Y/%m/%d %H:%M')
 else:
@@ -56,10 +55,10 @@ else:
 
 logger.addHandler(file_handler)
 logging.getLogger('asyncio').setLevel(logging.INFO)
-logger.debug('Constant, argparse, log successful')
+logger.debug('Input data receive successful, object MyWallet with cash created:{obj}'.format(obj=MyWallet.CashInWallet))
 ##############################Functions#############################
 async def get_data_about_course(session,url):
-    logger.debug('WORK Function get_data_about_course')
+    logger.debug('WORKING Function get_data_about_course')
     while True:
         async with session.get(url) as response:
             try:
@@ -78,89 +77,107 @@ async def get_data_about_course(session,url):
                         table[valuteX + '-' + valuteY] = json_response['Valute'][valuteX]['Value'] \
                                                          / json_response['Valute'][valuteY]['Value']
                 table['RUB-RUB'] = 1.0 # For full array
-                #logging.debug('LIST with data about exchanges :{table}'.format(table=table['RUB-RUB']))
+                MyWallet.SetRate(table)
+
             except Exception as error:
                 logger.error('Error in receiving the exchange rate.'
                              'Error description from interpreter:{error}'.format(error=error))
             response.close()
         await asyncio.sleep(TimesPerMinute)
 
-async def get_values_valute(request):
-    url = str(request.url.raw_parts[-2])  # usd, eur или rub
-    TextForResponse = url + ':' + str(InPocket[url])
+async def GetValueValute(request):
+    Valute = str(request.url.raw_parts[-2])  # usd, eur, rub or another
+    try:
+        Value = str(MyWallet.GetValuesCashInWallet(Valute))
+        TextForResponse = Valute + ':' + Value
+    except KeyError:
+        TextForResponse = 'You used unsupport valute'
+        logger.warning('You used unsupport valute')
+
     response = web.Response(status=200, reason='ОК',
                             text=TextForResponse, charset='utf-8',
                             content_type='text/plain')
     return response
 
-async def api_get_amount(request):
+async def GetAmount(request):
     TextForResponse = ''
-    summ = {}
-    for key in InPocket:
-        summ[key] = 0
-    # print(ClassInitialization.GetValuesCashInWallet("eur"))
-    for valute, cash in InPocket.items():
-        TextForResponse += '{value}:{cash}\n'.format(value=valute, cash=cash)
-        for valute_x, cash_x in InPocket.items():
-            summ[valute] += (cash_x * table[valute_x.upper() + '-' + valute.upper()])
-    TextForResponse += 'rub-usd:{rub_usd:.2f}\n' \
-                       'rub-eur:{rub_eur:.2f}\n' \
-                       'eur-usd:{eur_usd:.2f}\n'.format(rub_usd=table['USD-RUB'],
-                                                        rub_eur=table['EUR-RUB'],
-                                                        eur_usd=table['EUR-USD'],)
-    TextForResponse += 'sum:'
-    for valute, summ_x in summ.items():
-        TextForResponse += '{summ:.2f} {valute}|'.format(summ=summ_x, valute=valute)
+    Cash = MyWallet.CashInWallet
+    Rate = MyWallet.Rate
+    try:
+        for valute, cash in Cash.items():
+            TextForResponse += '{value}:{cash}\n'.format(value=valute, cash=cash)
 
+        for valute in Cash:
+            for valute_x in Cash:
+                if valute_x != valute and valute_x == 'rub':
+                    NeedRate = (str(valute).upper() + '-' + str(valute_x).upper())
+                    TextForResponse += '{Name}:{Value:.2f}\n'.format(Name=NeedRate, Value=Rate[NeedRate])
+
+        TextForResponse += 'sum:'
+        for valute in Cash:
+            amount = MyWallet.GetAmountInAnyValute(valute)
+            TextForResponse += '{summ:.2f} {valute}|'.format(summ=amount, valute=valute)
+    except KeyError:
+        TextForResponse = 'You used unsupport valute'
+        logger.warning('You used unsupport valute')
     response = web.Response(status=200, reason='ОК',
                             text=TextForResponse, charset='utf-8',
                             content_type='text/plain')
     return response
 
-async def api_post_set(request):
+async def PostAmountSet(request):
     reason = ''
     res = await request.content.read()
+
     try:
-        s = json.loads(res)
-        for key, value in s.items():
-            InPocket[key] = value
+        JsonResponse = json.loads(res)
+        MyWallet.SetCashInWallet(JsonResponse)
+        for key, value in JsonResponse.items():
             reason += 'You set {valute}:{value}\n'.format(valute=key, value=value)
     except json.decoder.JSONDecodeError:
         reason = 'Incorrect data'
+        logger.warning('Incorrect data')
+    except KeyError:
+        reason = 'You used unsupport valute'
+        logger.warning('You used unsupport valute')
+
     return web.Response(status=200, reason='ОК',
                         text=reason,
                         charset='utf-8', content_type='text/plain')
 
-async def api_post_modify(request):
+async def PostModify(request):
     reason = ''
     res = await request.content.read()
+
     try:
-        logger.debug("Type of data:{type},data:{data}".format(type=type(res),data=res))
-        s = json.loads(res)
-        for key, value in s.items():
-            InPocket[key] += value
+        JsonResponse = json.loads(res)
+        MyWallet.ModifyCashInWallet(JsonResponse)
+        for key, value in JsonResponse.items():
             reason += 'You modify {valute}:{value}\n'.format(valute=key, value=value)
     except json.decoder.JSONDecodeError:
         reason = 'Incorrect data'
+        logger.warning('Incorrect data')
+    except KeyError:
+        reason = 'You used unsupport valute'
+        logger.warning('You used unsupport valute')
+
     return web.Response(status=200, reason='ОК',
                         text=reason,
                         charset='utf-8', content_type='text/plain')
 
 def create_runner():
-    logger.debug('WORK Function create_runner')
+    logger.debug('WORKING Function create_runner')
     app = web.Application()
     app.add_routes([
-        web.get('/rub/get', get_values_valute),
-        web.get('/usd/get', get_values_valute),
-        web.get('/eur/get', get_values_valute),
-        web.get('/amount/get', api_get_amount),
-        web.post('/amount/set', api_post_set),
-        web.post('/modify', api_post_modify)])
+        web.get('/amount/get', GetAmount),
+        web.get('/{name}/get', GetValueValute),
+        web.post('/amount/set', PostAmountSet),
+        web.post('/modify', PostModify)])
 
     return web.AppRunner(app, access_log_class=AccessLogger)
 # Servers
 async def start_server(host='127.0.0.1', port=8080):
-    logger.debug('WORK Function start_server')
+    logger.debug('WORKING Function start_server')
     runner = create_runner()
     await runner.setup()
     site = web.TCPSite(runner, host, port)
@@ -168,39 +185,38 @@ async def start_server(host='127.0.0.1', port=8080):
     logger.info('SERVER START {host}:{port}'.format(host=host, port=port))
 
 async def print_to_console():
-    summ = {}
-    for key in InPocket:
-        summ[key] = 0
+    NeedRate = ''
     while True:
+        CheckRate = MyWallet.CheckChangeRate()
+        CheckCash = MyWallet.CheckChangeCash()
         TextForResponse = ''
-        if table != {}:
-            if ClassInitialization.CheckChangeCashInPocket(InPocket) is True\
-            or ClassInitialization.CheckChangeCourseValute(table) is True:
-                CashInPocket = ClassInitialization.DataAboutCashLocal
-                CourseValute = ClassInitialization.DataAboutCourseLocal
-                for valute, cash in CashInPocket.items():
-                    TextForResponse += '{value}:{cash} '.format(value=valute, cash=cash)
-                    for valute_x, cash_x in CashInPocket.items():
-                        try:
-                            summ[valute] += (cash_x * table[valute_x.upper() + '-' + valute.upper()])
-                        except KeyError:
-                            logger.debug("Not key in dict :{reason}".format(reason=valute))
 
-                TextForResponse += '\nrub-usd:{rub_usd:.2f}\n' \
-                                   'rub-eur:{rub_eur:.2f}\n' \
-                                   'eur-usd:{eur_usd:.2f}\n'.format(rub_usd=CourseValute['USD-RUB'],
-                                                                    rub_eur=CourseValute['EUR-RUB'],
-                                                                    eur_usd=CourseValute['EUR-USD'],)
-                TextForResponse += 'sum:'
-                for valute, summ_x in summ.items():
-                    TextForResponse += '{summ:.2f} {valute}|'.format(summ=summ_x, valute=valute)
-                logger.info('Cash or Curse is change:\n{data}'.format(data=TextForResponse))
-                await asyncio.sleep(60)
-        await asyncio.sleep(1)
+        if (CheckRate is not None and CheckCash is True) or CheckRate is True:
+            Cash = MyWallet.CashInWallet
+            Rate = MyWallet.Rate
+
+            for valute, cash in Cash.items():
+                TextForResponse += '{value}:{cash} \n'.format(value=valute, cash=cash)
+
+            for valute in Cash:
+                for valute_x in Cash:
+                    if valute_x != valute and valute_x == 'rub':
+                        NeedRate = (str(valute).upper() + '-' + str(valute_x).upper())
+                        TextForResponse += '{Name}:{Value:.2f}\n'.format(Name = NeedRate,Value = Rate[NeedRate])
+
+            TextForResponse += 'sum:'
+            for valute in Cash:
+                amount = MyWallet.GetAmountInAnyValute(valute)
+                TextForResponse += '{summ:.2f} {valute}|'.format(summ=amount, valute=valute)
+
+            logger.info('Cash or Curse is change:\n{data}'.format(data=TextForResponse))
+            await asyncio.sleep(5)
+        else:
+            await asyncio.sleep(1)
 
 
 async def main(loop):
-    logger.debug('WORK Function main')
+    logger.debug('WORKING Function main')
     logger.info('Aplication [Wallet App] started')
     urls = ["https://www.cbr-xml-daily.ru/daily_json.js"]
     async with aiohttp.ClientSession(loop=loop) as session:
