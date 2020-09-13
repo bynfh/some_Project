@@ -28,7 +28,10 @@ class Wallet():
     def SetCashInWallet(self,ValuteValues):
         assert type(ValuteValues) is dict, 'NOT DICT'
         for Valute, Values in ValuteValues.items():
-            if ValuteValues[Valute] != self.CashInWallet[Valute]:
+            if Valute not in self.CashInWallet:
+                Messege = 'This valute unsupported:{valute}'.format(valute=Valute)
+                raise AssertionError(Messege)
+            elif ValuteValues[Valute] != self.CashInWallet[Valute]:
                 self.CashInWallet[Valute] = Values
                 self.isChangeCash = True
 
@@ -36,8 +39,12 @@ class Wallet():
     def ModifyCashInWallet(self,ValuteValues):
         assert type(ValuteValues) is dict, 'NOT DICT'
         for Valute, Values in ValuteValues.items():
-            self.CashInWallet[Valute] += Values
-            self.isChangeCash = True
+            if Valute not in self.CashInWallet:
+                Messege = 'This valute unsupported:{valute}'.format(valute=Valute)
+                raise AssertionError(Messege)
+            else:
+                self.CashInWallet[Valute] += Values
+                self.isChangeCash = True
 
     def SetRate(self, Rate):
         assert type(Rate) is dict, 'NOT DICT'
@@ -47,19 +54,23 @@ class Wallet():
             self.isChangeCourse = True
 
     def GetAmountInAnyValute(self,valute):
+        assert type(valute) is str, 'NOT STR'
         amount = 0
-        try:
-            for valute_x, cash_x in self.CashInWallet.items():
-                amount += int((cash_x * self.Rate[valute_x.upper() + '-' + valute.upper()]))
-            return amount
-        except KeyError:
-            raise KeyError("this key is not in dict:{key}".format(key=valute))
+        for valute_x, cash_x in self.CashInWallet.items():
+            NeedRate = valute_x.upper() + '-' + valute.upper()
+            if NeedRate not in self.Rate:
+                raise AssertionError(['This valute unsupported', valute])
+            amount += int((cash_x * self.Rate[NeedRate]))
+        return amount
 
     def GetValuesCashInWallet(self,valute):
-        try:
+        if valute not in self.CashInWallet:
+            raise AssertionError(['This valute unsupported', valute])
+        else:
             return self.CashInWallet[valute]
-        except KeyError:
-            raise KeyError("this key is not in dict:{key}".format(key=valute))
+
+
+
 
 
 
