@@ -1,0 +1,12 @@
+import sqlite3
+
+Connection = sqlite3.connect('VkBot.db')
+cursor = Connection.cursor()
+for row in cursor.execute(f'''SELECT sec.name,
+                                     prod.name
+                              FROM product prod,
+                                   section sec
+                              WHERE sec.ID_section = prod.ID_section'''):
+    print(row)
+Connection.close()
+
