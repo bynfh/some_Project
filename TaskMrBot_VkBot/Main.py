@@ -280,7 +280,10 @@ def main():
                     DialogGenerator = section()
                     SetupGenerator = next(DialogGenerator)
                     GenForEachUser_id[event.user_id] = DialogGenerator
-                    write_msg(vk, event, event.user_id, SetupGenerator[0], SetupGenerator[1], SetupGenerator[2])
+                    write_msg(vk, event, event.user_id, message=SetupGenerator[0],
+                                                        keyboard=SetupGenerator[1],
+                                                        attachment=SetupGenerator[2]
+                              )
                     logger.debug(f"Added new generator for user. ID:[{event.user_id}]")
                     continue
 
