@@ -8,5 +8,15 @@ for row in cursor.execute(f'''SELECT sec.name,
                                    section sec
                               WHERE sec.ID_section = prod.ID_section'''):
     print(row)
+
+ListWithSection = []
+for row in cursor.execute(f'''SELECT sec.name             
+                              FROM   section sec
+                              '''):
+    ListWithSection.append(row[0])
+
+print(ListWithSection)
+
+
 Connection.close()
 
