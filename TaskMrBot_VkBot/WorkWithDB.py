@@ -6,17 +6,9 @@ for row in cursor.execute(f'''SELECT sec.name,
                                      prod.name
                               FROM product prod,
                                    section sec
-                              WHERE sec.ID_section = prod.ID_section'''):
+                              WHERE sec.ID_section = prod.ID_section
+                              AND   sec.name = "{}"'''):
     print(row)
-
-ListWithSection = []
-for row in cursor.execute(f'''SELECT sec.name             
-                              FROM   section sec
-                              '''):
-    ListWithSection.append(row[0])
-
-print(ListWithSection)
-
 
 Connection.close()
 
