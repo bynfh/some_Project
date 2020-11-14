@@ -6,9 +6,9 @@ from loguru import logger
 import sqlite3
 
 logger.add("VkBot_Bakery.json",
-           format="{time:D:M:YY  HH:mm} {level} {message}",
+           format="{time:D-M-YY  HH:mm} {level} {message}",
            level="DEBUG",
-           serialize=True)
+           serialize=True,)
 
 def GetSectionFromDB():
     with sqlite3.connect('VkBot.db') as Connection:
@@ -62,7 +62,7 @@ def section():
             if section == 'пицца':
                 yield from Pizza()
             if section == 'пироги':
-                yield from Cacke()
+                yield from Cake()
             if section == 'назад':
                 yield from section()
 
@@ -75,8 +75,11 @@ def Bread():
                      1)Белый хлеб
                      2)Ржаной хлеб
                  Выберите продукт'''
-    attachment = 'photo-200208378_457239027,' \
-                 'photo-200208378_457239026'
+    PhotoBread = {
+                   'белый хлеб': 'photo-200208378_457239027',
+                   'ржаной хлеб': 'photo-200208378_457239026',
+                  }
+    attachment = ','.join(PhotoBread.values())
 #Добавляем кол-во кнопок сколько позиций в БД + назад
     BreadTypes = GetProductsFromDB('хлеб')
     keyboard = VkKeyboard(one_time=True)
@@ -94,28 +97,15 @@ def Bread():
         if answer == 'назад':
             yield from section()
 #Переходы в следущие состояния
-    if answer == 'белый хлеб':
-        yield from WhiteBread()
-    if answer == 'ржаной хлеб':
-        yield from BrownBread()
+    yield from SingleBread(answer, PhotoBread.get(answer))
 
-def WhiteBread():
+def SingleBread(TypeBread, Photo):
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
     keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = 'photo-200208378_457239027'
-    answer = yield f"Вы заказали в разделе Хлеб. Товар: Белый хлеб. Приятного аппетита", keyboard, attachment
-    if answer == 'начать покупки':
-        yield from section()
-    if answer == 'назад':
-        yield from Bread()
-
-def BrownBread():
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = 'photo-200208378_457239026'
-    answer = yield f"Вы заказали в разделе Хлеб. Товар: Ржаной хлеб. Приятного аппетита", keyboard, attachment
+    attachment = Photo
+    answer = yield f"Вы заказали в разделе Пицца." \
+                   f" Товар: {TypeBread.capitalize()}. Приятного аппетита", keyboard, attachment
     if answer == 'начать покупки':
         yield from section()
     if answer == 'назад':
@@ -130,9 +120,12 @@ def Pizza():
                  Выберите продукт'''
     keyboard = VkKeyboard(one_time=True)
     PizzaTypes = GetProductsFromDB('пицца')
-    attachment = 'photo-200208378_457239025,' \
-                 'photo-200208378_457239024,' \
-                 'photo-200208378_457239023'
+    PhotoPizzes = {
+                   'маргарита': 'photo-200208378_457239025',
+                   'пепперони': 'photo-200208378_457239024',
+                   'баварская': 'photo-200208378_457239023',
+                  }
+    attachment = ','.join(PhotoPizzes.values())
     for PizzaType in PizzaTypes:
         keyboard.add_button(PizzaType, color=VkKeyboardColor.POSITIVE)
     keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
@@ -146,111 +139,61 @@ def Pizza():
             yield from section()
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Начать покупки', color=VkKeyboardColor.SECONDARY)
-    if answer == 'маргарита':
-        yield from MargaritaPizz()
-    if answer == 'пепперони':
-        yield from PepperoniPizz()
-    if answer == 'баварская':
-        yield from BavarskayaPizz()
+    yield from SinglePizza(answer, PhotoPizzes.get(answer))
 
-def MargaritaPizz():
+def SinglePizza(TypePizza, Photo):
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
     keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = 'photo-200208378_457239025'
-    answer = yield f"Вы заказали в разделе Пицца. Товар: Маргарита. Приятного аппетита", keyboard, attachment
+    attachment = Photo
+    answer = yield f"Вы заказали в разделе Пицца." \
+                   f" Товар: {TypePizza.capitalize()}. Приятного аппетита", keyboard, attachment
     if answer == 'начать покупки':
         yield from section()
     if answer == 'назад':
         yield from Pizza()
 
-def PepperoniPizz():
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = 'photo-200208378_457239024'
-    answer = yield f"Вы заказали в разделе Пицца. Товар: Пеперони. Приятного аппетита", keyboard, attachment
-    if answer == 'начать покупки':
-        yield from section()
-    if answer == 'назад':
-        yield from Pizza()
-
-
-def BavarskayaPizz():
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = 'photo-200208378_457239023'
-    answer = yield f"Вы заказали в разделе Пицца. Товар: Баварская. Приятного аппетита", keyboard, attachment
-    if answer == 'начать покупки':
-        yield from section()
-    if answer == 'назад':
-        yield from Pizza()
-
-
-def Cacke():
+def Cake():
     Message = '''Вы перешли в раздел Пироги. В нашем меню:
                      1)Мясной
                      2)Рыбник
                      3)Капустный
                      Выберите продукт'''
     keyboard = VkKeyboard(one_time=True)
-    CackeTypes = GetProductsFromDB('пироги')
-    attachment = 'photo-200208378_457239020,' \
-                 'photo-200208378_457239022,' \
-                 'photo-200208378_457239021'
-    for CackeType in CackeTypes:
-        keyboard.add_button(CackeType, color=VkKeyboardColor.POSITIVE)
+    CakeTypes = GetProductsFromDB('пироги')
+    PhotoCake = {
+                  'мясной пирог': 'photo-200208378_457239022',
+                  'рыбник': 'photo-200208378_457239020',
+                  'капустный пирог': 'photo-200208378_457239021',
+                }
+    attachment = ','.join(PhotoCake.values())
+    for CakeType in CakeTypes:
+        keyboard.add_button(CakeType, color=VkKeyboardColor.POSITIVE)
     keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
     answer = yield Message, keyboard, attachment
-    CackeTypes = list(map(str.lower, CackeTypes))
+    CakeTypes = list(map(str.lower, CakeTypes))
     if answer == 'назад':
         yield from section()
-    while answer not in CackeTypes:
+    while answer not in CakeTypes:
         answer = yield "Выберите достпуный продукт", keyboard, attachment
         if answer == 'назад':
             yield from section()
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Начать покупки', color=VkKeyboardColor.SECONDARY)
-    if answer == 'рыбник':
-        yield from FishCake()
-    if answer == 'мясной пирог':
-        yield from MeatCake()
-    if answer == 'капустный пирог':
-        yield from CabbegeCake()
+    yield from SingleCake(answer, PhotoCake.get(answer))
 
-def MeatCake():
+
+def SingleCake(TypeCake, Photo):
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
     keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = 'photo-200208378_457239022'
-    answer = yield f"Вы заказали в разделе Пироги. Товар: Мясной пирог. Приятного аппетита", keyboard, attachment
+    attachment = Photo
+    answer = yield f"Вы заказали в разделе Пицца." \
+                   f" Товар: {TypeCake.capitalize()}. Приятного аппетита", keyboard, attachment
     if answer == 'начать покупки':
         yield from section()
     if answer == 'назад':
-        yield from Cacke()
-
-def FishCake():
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = 'photo-200208378_457239020'
-    answer = yield f"Вы заказали в разделе Пироги. Товар: Рыбник. Приятного аппетита", keyboard, attachment
-    if answer == 'начать покупки':
-        yield from section()
-    if answer == 'назад':
-        yield from Cacke()
-
-def CabbegeCake():
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = 'photo-200208378_457239021'
-    answer = yield f"Вы заказали в разделе Пироги. Товар: Капустный пирог. Приятного аппетита", keyboard, attachment
-    if answer == 'начать покупки':
-        yield from section()
-    if answer == 'назад':
-        yield from Cacke()
+        yield from Cake()
 
 
 def write_msg(vk, event, user_id, message, keyboard, attachment):
