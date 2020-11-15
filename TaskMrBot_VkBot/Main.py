@@ -4,6 +4,7 @@ from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 from vk_api.utils import get_random_id
 from loguru import logger
 import sqlite3
+import Bot_config
 
 logger.add("VkBot_Bakery.json",
            format="{time:D-M-YY  HH:mm} {level} {message}",
@@ -32,54 +33,54 @@ def GetProductsFromDB(section):
             ListWithSection.append(row[0])
         return ListWithSection
 
-def section():
+def section(Handlers=None):
     '''Функция-генератор. Создает 3 кнопки - разделы и одна кнопку - назад.
        Прикладывается 3 вложения в виде картинок
        Ответ который дает пользователь от этого зависит в какое следующее
        состояние перейдем.'''
     while True:
+        Handlers = {'хлеб': Bread(),
+                    'пироги': Cake(),
+                    'пицца': Pizza(), }
+
         keyboard = VkKeyboard(one_time=True)
         keyboard.add_button('Начать', color=VkKeyboardColor.SECONDARY)
         keyboard.add_line()
-        keyboard.add_button('Хлеб', color=VkKeyboardColor.POSITIVE)
-        keyboard.add_button('Пицца', color=VkKeyboardColor.POSITIVE)
-        keyboard.add_button('Пироги', color=VkKeyboardColor.POSITIVE)
+        SectionsFromDB = GetSectionFromDB()
+        for Section in SectionsFromDB:
+            keyboard.add_button(Section.capitalize(), color=VkKeyboardColor.POSITIVE)
         keyboard.add_line()
         keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
-        attachment = 'photo-200208378_457239017,' \
-                     'photo-200208378_457239019,' \
-                     'photo-200208378_457239018'
+        try:
+            attachment = Bot_config.PhotoForStart
+            message = Bot_config.MessegeForStart
+        except AttributeError:
+            attachment = ''
+            message = 'Администратор не добавил сообщение для старта'
+            logger.error('Заполните Bot_config.MessegeForStart or Bot_config.PhotoForStart')
 
-        answer = yield "Добрый день! Что хотите заказать? \n" \
-                       "Это будет только что из печи, хрустящий хлеб?\n" \
-                       "Может это будет пицца прямиком из Италии?\n" \
-                       "Или вы хотите отведать вкусный, домашний пирог?\n", keyboard, attachment
+        Response = yield message, keyboard, attachment
 
-        section = answer.lower()
-        if section in GetSectionFromDB():
-            if section == 'хлеб':
-                yield from Bread()
-            if section == 'пицца':
-                yield from Pizza()
-            if section == 'пироги':
-                yield from Cake()
-            if section == 'назад':
-                yield from section()
+        Section = Response.lower()
+        if Section in SectionsFromDB:
+            try:
+                yield from Handlers.get(Section)
+            except TypeError:
+                logger.error(f'Тема {Section.capitalize()} есть в БД но обработчика нет')
+                yield f'Раздел {Section.capitalize()} не доработан. Попробуйте что-то другое', keyboard, ''
 
 def Bread():
     '''Функция-генератор. Создает столько кнопок, сколько позиций хлеба в БД + кнопка назад.
        Прикладывается два вложения в виде картинок
        состояние перейдем.'''
-    Message = '''Вы перешли в раздел Хлеб. 
-                 В нашем ассортименте:    
-                     1)Белый хлеб
-                     2)Ржаной хлеб
-                 Выберите продукт'''
-    PhotoBread = {
-                   'белый хлеб': 'photo-200208378_457239027',
-                   'ржаной хлеб': 'photo-200208378_457239026',
-                  }
-    attachment = ','.join(PhotoBread.values())
+    try:
+        Message = Bot_config.MessageSectionBread
+        Photo = Bot_config.PhotoBread
+        attachment = ','.join(Photo.values())
+    except AttributeError:
+        Message = 'Для раздела Хлеб нет администратор не добавил сообщение'
+        attachment = ''
+        logger.error('Заполните Bot_config.MessageSectionBread or Bot_config.PhotoBread')
 #Добавляем кол-во кнопок сколько позиций в БД + назад
     BreadTypes = GetProductsFromDB('хлеб')
     keyboard = VkKeyboard(one_time=True)
@@ -97,7 +98,7 @@ def Bread():
         if answer == 'назад':
             yield from section()
 #Переходы в следущие состояния
-    yield from SingleBread(answer, PhotoBread.get(answer))
+    yield from SingleBread(answer, Bot_config.PhotoBread.get(answer))
 
 def SingleBread(TypeBread, Photo):
     keyboard = VkKeyboard(one_time=True)
@@ -113,18 +114,10 @@ def SingleBread(TypeBread, Photo):
 
 
 def Pizza():
-    Message = '''Вы перешли в раздел Пицца. В нашем меню:
-                 1)Маргарита
-                 2)Пепперони
-                 3)Баварская
-                 Выберите продукт'''
+    Message = Bot_config.MessageSectionPizz
     keyboard = VkKeyboard(one_time=True)
     PizzaTypes = GetProductsFromDB('пицца')
-    PhotoPizzes = {
-                   'маргарита': 'photo-200208378_457239025',
-                   'пепперони': 'photo-200208378_457239024',
-                   'баварская': 'photo-200208378_457239023',
-                  }
+    PhotoPizzes = Bot_config.PhotoPizzes
     attachment = ','.join(PhotoPizzes.values())
     for PizzaType in PizzaTypes:
         keyboard.add_button(PizzaType, color=VkKeyboardColor.POSITIVE)
@@ -139,7 +132,7 @@ def Pizza():
             yield from section()
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Начать покупки', color=VkKeyboardColor.SECONDARY)
-    yield from SinglePizza(answer, PhotoPizzes.get(answer))
+    yield from SingleBread(answer, Bot_config.PhotoPizzes.get(answer))
 
 def SinglePizza(TypePizza, Photo):
     keyboard = VkKeyboard(one_time=True)
@@ -154,18 +147,10 @@ def SinglePizza(TypePizza, Photo):
         yield from Pizza()
 
 def Cake():
-    Message = '''Вы перешли в раздел Пироги. В нашем меню:
-                     1)Мясной
-                     2)Рыбник
-                     3)Капустный
-                     Выберите продукт'''
+    Message = Bot_config.MessageSectionCake
     keyboard = VkKeyboard(one_time=True)
     CakeTypes = GetProductsFromDB('пироги')
-    PhotoCake = {
-                  'мясной пирог': 'photo-200208378_457239022',
-                  'рыбник': 'photo-200208378_457239020',
-                  'капустный пирог': 'photo-200208378_457239021',
-                }
+    PhotoCake = Bot_config.PhotoCake
     attachment = ','.join(PhotoCake.values())
     for CakeType in CakeTypes:
         keyboard.add_button(CakeType, color=VkKeyboardColor.POSITIVE)
@@ -180,7 +165,7 @@ def Cake():
             yield from section()
     keyboard = VkKeyboard(one_time=True)
     keyboard.add_button('Начать покупки', color=VkKeyboardColor.SECONDARY)
-    yield from SingleCake(answer, PhotoCake.get(answer))
+    yield from SingleBread(answer, Bot_config.PhotoCake.get(answer))
 
 
 def SingleCake(TypeCake, Photo):
@@ -201,12 +186,12 @@ def write_msg(vk, event, user_id, message, keyboard, attachment):
                                 'message': message,
                                 'random_id': get_random_id(),
                                 'keyboard': keyboard.get_keyboard(),
-                                'attachment':attachment,})
+                                'attachment': attachment,})
     logger.debug(f"Message for user_ID:[{event.user_id}]:{message}")
 
 
 def main():
-    token = "3fcfee483ffadcf5ea28be5aed479775c65e2554ec8cfe08ac73ae0ffa10077048b930d99c4a7e41ea7b2"
+    token = Bot_config.TOKEN
     # Авторизуемся как сообщество
     vk = vk_api.VkApi(token=token)
     longpoll = VkLongPoll(vk)
