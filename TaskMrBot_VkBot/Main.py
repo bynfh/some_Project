@@ -34,153 +34,13 @@ def GetProductsFromDB(section):
             ListWithSection.append(row[0])
         return ListWithSection
 
-def section(Handlers=None):
-    '''Функция-генератор. Создает 3 кнопки - разделы и одна кнопку - назад.
-       Прикладывается 3 вложения в виде картинок
-       Ответ который дает пользователь от этого зависит в какое следующее
-       состояние перейдем.'''
-    while True:
-        Handlers = {'хлеб': Bread(),
-                    'пироги': Cake(),
-                    'пицца': Pizza(), }
-
-        keyboard = VkKeyboard(one_time=True)
-        keyboard.add_button('Начать', color=VkKeyboardColor.SECONDARY)
-        keyboard.add_line()
-        SectionsFromDB = GetSectionFromDB()
-        for Section in SectionsFromDB:
-            keyboard.add_button(Section.capitalize(), color=VkKeyboardColor.POSITIVE)
-        keyboard.add_line()
-        keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
-        try:
-            attachment = Bot_config.PhotoForStart
-            message = Bot_config.MessegeForStart
-        except AttributeError:
-            attachment = ''
-            message = 'Администратор не добавил сообщение для старта'
-            logger.error('Заполните Bot_config.MessegeForStart or Bot_config.PhotoForStart')
-
-        Response = yield message, keyboard, attachment
-
-        Section = Response.lower()
-        if Section in SectionsFromDB:
-            try:
-                yield from Handlers.get(Section)
-            except TypeError:
-                logger.error(f'Тема {Section.capitalize()} есть в БД но обработчика нет')
-                yield f'Раздел {Section.capitalize()} не доработан. Попробуйте что-то другое', keyboard, ''
-
-def Bread():
-    '''Функция-генератор. Создает столько кнопок, сколько позиций хлеба в БД + кнопка назад.
-       Прикладывается два вложения в виде картинок
-       состояние перейдем.'''
-    try:
-        Message = Bot_config.MessageSectionBread
-        Photo = Bot_config.PhotoBread
-        attachment = ','.join(Photo.values())
-    except AttributeError:
-        Message = 'Для раздела Хлеб нет администратор не добавил сообщение'
-        attachment = ''
-        logger.error('Заполните Bot_config.MessageSectionBread or Bot_config.PhotoBread')
-#Добавляем кол-во кнопок сколько позиций в БД + назад
-    BreadTypes = GetProductsFromDB('хлеб')
-    keyboard = VkKeyboard(one_time=True)
-    for BreadType in BreadTypes:
-        keyboard.add_button(BreadType, color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
-
-    answer = yield Message, keyboard, attachment
-
-    BreadTypes = list(map(str.lower, BreadTypes))
-    if answer == 'назад':
-        yield from section()
-    while answer not in BreadTypes:
-        answer = yield "Выберите достпуный продукт", keyboard, attachment
-        if answer == 'назад':
-            yield from section()
-#Переходы в следущие состояния
-    yield from SingleBread(answer, Bot_config.PhotoBread.get(answer))
-
-def SingleBread(TypeBread, Photo):
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = Photo
-    answer = yield f"Вы заказали в разделе Пицца." \
-                   f" Товар: {TypeBread.capitalize()}. Приятного аппетита", keyboard, attachment
-    if answer == 'начать покупки':
-        yield from section()
-    if answer == 'назад':
-        yield from Bread()
-
-
-def Pizza():
-    Message = Bot_config.MessageSectionPizz
-    keyboard = VkKeyboard(one_time=True)
-    PizzaTypes = GetProductsFromDB('пицца')
-    PhotoPizzes = Bot_config.PhotoPizzes
-    attachment = ','.join(PhotoPizzes.values())
-    for PizzaType in PizzaTypes:
-        keyboard.add_button(PizzaType, color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
-    answer = yield Message, keyboard, attachment
-    PizzaTypes = list(map(str.lower, PizzaTypes))
-    if answer == 'назад':
-        yield from section()
-    while answer not in PizzaTypes:
-        answer = yield "Выберите достпуный продукт", keyboard, attachment
-        if answer == 'назад':
-            yield from section()
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.SECONDARY)
-    yield from SingleBread(answer, Bot_config.PhotoPizzes.get(answer))
-
-def SinglePizza(TypePizza, Photo):
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = Photo
-    answer = yield f"Вы заказали в разделе Пицца." \
-                   f" Товар: {TypePizza.capitalize()}. Приятного аппетита", keyboard, attachment
-    if answer == 'начать покупки':
-        yield from section()
-    if answer == 'назад':
-        yield from Pizza()
-
-def Cake():
-    Message = Bot_config.MessageSectionCake
-    keyboard = VkKeyboard(one_time=True)
-    CakeTypes = GetProductsFromDB('пироги')
-    PhotoCake = Bot_config.PhotoCake
-    attachment = ','.join(PhotoCake.values())
-    for CakeType in CakeTypes:
-        keyboard.add_button(CakeType, color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
-    answer = yield Message, keyboard, attachment
-    CakeTypes = list(map(str.lower, CakeTypes))
-    if answer == 'назад':
-        yield from section()
-    while answer not in CakeTypes:
-        answer = yield "Выберите достпуный продукт", keyboard, attachment
-        if answer == 'назад':
-            yield from section()
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.SECONDARY)
-    yield from SingleBread(answer, Bot_config.PhotoCake.get(answer))
-
-
-def SingleCake(TypeCake, Photo):
-    keyboard = VkKeyboard(one_time=True)
-    keyboard.add_button('Начать покупки', color=VkKeyboardColor.POSITIVE)
-    keyboard.add_button('Назад', color=VkKeyboardColor.NEGATIVE)
-    attachment = Photo
-    answer = yield f"Вы заказали в разделе Пицца." \
-                   f" Товар: {TypeCake.capitalize()}. Приятного аппетита", keyboard, attachment
-    if answer == 'начать покупки':
-        yield from section()
-    if answer == 'назад':
-        yield from Cake()
-
+PriviousState = ['старт','старт']
+def StateStore(state):
+    if state != PriviousState[1]:
+        PriviousState.append(state)
+    if len(PriviousState) > 2:
+        del PriviousState[0]
+    return PriviousState[0]
 
 def write_msg(vk, event, user_id, message, keyboard, attachment):
     vk.method('messages.send', {'user_id': user_id,
@@ -193,26 +53,36 @@ def write_msg(vk, event, user_id, message, keyboard, attachment):
 
 def main():
     Bread = State(Bot_config.MessageSectionBread, GetProductsFromDB('хлеб'), Bot_config.PhotoBread)
-    WhiteBread = State(Bot_config.MessageBread.get('белый хлеб'),
-                       ['белый хлеб'],
-                       Bot_config.PhotoBread.get('белый хлеб'),)
-    BrownBread = State(Bot_config.MessageBread.get('ржаной хлеб'),
-                       ['ржаной хлеб'],
-                       Bot_config.PhotoBread.get('ржаной хлеб'),)
+    WhiteBread = State(Bot_config.MessageBread.get('белый хлеб'), ['белый хлеб'], Bot_config.PhotoBread.get('белый хлеб'))
+    BrownBread = State(Bot_config.MessageBread.get('ржаной хлеб'), ['ржаной хлеб'], Bot_config.PhotoBread.get('ржаной хлеб'))
     Pizza = State(Bot_config.MessageSectionPizz, GetProductsFromDB('пицца'), Bot_config.PhotoPizzes)
+    Margo = State(Bot_config.MessagePizz.get('маргарита'), ['маргарита'], Bot_config.PhotoPizzes.get('маргарита'))
+    Peper = State(Bot_config.MessagePizz.get('пепперони'), ['пепперони'], Bot_config.PhotoPizzes.get('пепперони'))
+    Bavar = State(Bot_config.MessagePizz.get('баварская'), ['баварская'], Bot_config.PhotoPizzes.get('баварская'))
     Cake = State(Bot_config.MessageSectionCake, GetProductsFromDB('пироги'), Bot_config.PhotoCake)
+    Meat = State(Bot_config.MessageCake.get('мясной'), ['мясной'], Bot_config.PhotoCake.get('мясной'))
+    Fish = State(Bot_config.MessageCake.get('рыбник'), ['рыбник'], Bot_config.PhotoCake.get('рыбник'))
+    Cabbag = State(Bot_config.MessageCake.get('капустный пирог'), ['капустный пирог'], Bot_config.PhotoCake.get('капустный пирог'))
     Start = State(Bot_config.MessegeForStart, GetSectionFromDB(), Bot_config.PhotoForStart)
-    Handlers = {'старт': {'method': Start.GetStateProduct(), 'state': 0},
-                'хлеб': {'method': Bread.GetStateProduct(), 'state': 1},
+    Handlers = {'старт': Start.GetStateProduct(),
+                'хлеб': Bread.GetStateProduct(),
                 'белый хлеб': WhiteBread.GetStateProduct(),
-                'ржаной хлеб': BrownBread.GetStateProduct(),}
+                'ржаной хлеб': BrownBread.GetStateProduct(),
+                'пицца': Pizza.GetStateProduct(),
+                'маргарита': Margo.GetStateProduct(),
+                'пепперони': Peper.GetStateProduct(),
+                'баварская': Bavar.GetStateProduct(),
+                'пироги': Cake.GetStateProduct(),
+                'мясной': Meat.GetStateProduct(),
+                'рыбник': Fish.GetStateProduct(),
+                'капустный пирог': Cabbag.GetStateProduct(),
+                'назад': Start.GetStateProduct(),}
 
     token = Bot_config.TOKEN
     # Авторизуемся как сообщество
     vk = vk_api.VkApi(token=token)
     longpoll = VkLongPoll(vk)
-
-    GenForEachUser_id = {}
+    store = ''
     for event in longpoll.listen():
         # Если пришло новое сообщение
         if event.type == VkEventType.MESSAGE_NEW:
@@ -220,30 +90,20 @@ def main():
             if event.to_me:
                 logger.debug(f"We received new message. TEXT:[{event.text.lower()}] ID:[{event.user_id}]")
 
-                # if event.user_id not in GenForEachUser_id.keys():
-                #     DialogGenerator = section()
-                #     SetupGenerator = next(DialogGenerator)
-                #     GenForEachUser_id[event.user_id] = DialogGenerator
-                #     write_msg(vk, event, event.user_id, message=SetupGenerator[0],
-                #                                         keyboard=SetupGenerator[1],
-                #                                         attachment=SetupGenerator[2]
-                #               )
-                #     logger.debug(f"Added new generator for user. ID:[{event.user_id}]")
-                #     continue
-
-                # Сообщение от пользователя
                 request = event.text.lower()
 
                 try:
-                    message, keybord, attachment = Handlers.get(request).get('method')
-                    print(Handlers.get(request).get('state'))
-                except AttributeError:
-                    keyboard = VkKeyboard(one_time=True)
-                    keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
-                    message, keybord, attachment = 'ПУСТО', keyboard, ''
+                    if request not in Handlers:
+                        message, keybord, attachment = Handlers.get('старт')
+                    elif request == 'назад':
+                        message, keybord, attachment = Handlers.get(store)
+                    else:
+                        message, keybord, attachment = Handlers.get(request)
+                except Exception as error:
+                    message, keybord, attachment = Handlers.get('старт')
 
 
-                # message, keybord, attachment = GenForEachUser_id[event.user_id].send(request)
+                store = StateStore(request)
                 write_msg(vk, event, event.user_id, message, keybord, attachment)
 
 

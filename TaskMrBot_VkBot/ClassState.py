@@ -27,15 +27,4 @@ class State():
         keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
         return Message, keyboard, attachment
 
-    # def Start(self):
-    #     Message = self.Message
-    #     attachment = self.PhotoProduct
-    #     # Добавляем кол-во кнопок сколько позиций в БД + назад
-    #     TypesProduct = self.TypesProduct
-    #     keyboard = VkKeyboard(one_time=True)
-    #     for BreadType in TypesProduct:
-    #         keyboard.add_button(BreadType, color=VkKeyboardColor.POSITIVE)
-    #     keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
-    #     return Message, keyboard, attachment
-
 
