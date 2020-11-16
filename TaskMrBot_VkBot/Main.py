@@ -192,11 +192,21 @@ def write_msg(vk, event, user_id, message, keyboard, attachment):
 
 
 def main():
-    Bread = State(Bot_config.MessageSectionBread, ['хлеб'], Bot_config.PhotoBread)
-    Pizza = State(Bot_config.MessageSectionPizz, ['пицца'], Bot_config.PhotoPizzes)
-    Peperoni = State(Bot_config.MessageSectionPizz, ['пепперони'], Bot_config.PhotoPizzes)
-    Start = State(Bot_config.MessegeForStart, ['Старт'], Bot_config.PhotoForStart)
-    Handlers = {'хлеб': Bread, 'старт': Start}
+    Bread = State(Bot_config.MessageSectionBread, GetProductsFromDB('хлеб'), Bot_config.PhotoBread)
+    WhiteBread = State(Bot_config.MessageBread.get('белый хлеб'),
+                       ['белый хлеб'],
+                       Bot_config.PhotoBread.get('белый хлеб'),)
+    BrownBread = State(Bot_config.MessageBread.get('ржаной хлеб'),
+                       ['ржаной хлеб'],
+                       Bot_config.PhotoBread.get('ржаной хлеб'),)
+    Pizza = State(Bot_config.MessageSectionPizz, GetProductsFromDB('пицца'), Bot_config.PhotoPizzes)
+    Cake = State(Bot_config.MessageSectionCake, GetProductsFromDB('пироги'), Bot_config.PhotoCake)
+    Start = State(Bot_config.MessegeForStart, GetSectionFromDB(), Bot_config.PhotoForStart)
+    Handlers = {'старт': {'method': Start.GetStateProduct(), 'state': 0},
+                'хлеб': {'method': Bread.GetStateProduct(), 'state': 1},
+                'белый хлеб': WhiteBread.GetStateProduct(),
+                'ржаной хлеб': BrownBread.GetStateProduct(),}
+
     token = Bot_config.TOKEN
     # Авторизуемся как сообщество
     vk = vk_api.VkApi(token=token)
@@ -223,8 +233,10 @@ def main():
 
                 # Сообщение от пользователя
                 request = event.text.lower()
+
                 try:
-                    message, keybord, attachment = Handlers.get(request).Start()
+                    message, keybord, attachment = Handlers.get(request).get('method')
+                    print(Handlers.get(request).get('state'))
                 except AttributeError:
                     keyboard = VkKeyboard(one_time=True)
                     keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
