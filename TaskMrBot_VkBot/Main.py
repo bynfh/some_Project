@@ -5,6 +5,7 @@ from vk_api.utils import get_random_id
 from loguru import logger
 import sqlite3
 import Bot_config
+from ClassState import State
 
 logger.add("VkBot_Bakery.json",
            format="{time:D-M-YY  HH:mm} {level} {message}",
@@ -191,6 +192,11 @@ def write_msg(vk, event, user_id, message, keyboard, attachment):
 
 
 def main():
+    Bread = State(Bot_config.MessageSectionBread, ['хлеб'], Bot_config.PhotoBread)
+    Pizza = State(Bot_config.MessageSectionPizz, ['пицца'], Bot_config.PhotoPizzes)
+    Peperoni = State(Bot_config.MessageSectionPizz, ['пепперони'], Bot_config.PhotoPizzes)
+    Start = State(Bot_config.MessegeForStart, ['Старт'], Bot_config.PhotoForStart)
+    Handlers = {'хлеб': Bread, 'старт': Start}
     token = Bot_config.TOKEN
     # Авторизуемся как сообщество
     vk = vk_api.VkApi(token=token)
@@ -204,20 +210,28 @@ def main():
             if event.to_me:
                 logger.debug(f"We received new message. TEXT:[{event.text.lower()}] ID:[{event.user_id}]")
 
-                if event.user_id not in GenForEachUser_id.keys():
-                    DialogGenerator = section()
-                    SetupGenerator = next(DialogGenerator)
-                    GenForEachUser_id[event.user_id] = DialogGenerator
-                    write_msg(vk, event, event.user_id, message=SetupGenerator[0],
-                                                        keyboard=SetupGenerator[1],
-                                                        attachment=SetupGenerator[2]
-                              )
-                    logger.debug(f"Added new generator for user. ID:[{event.user_id}]")
-                    continue
+                # if event.user_id not in GenForEachUser_id.keys():
+                #     DialogGenerator = section()
+                #     SetupGenerator = next(DialogGenerator)
+                #     GenForEachUser_id[event.user_id] = DialogGenerator
+                #     write_msg(vk, event, event.user_id, message=SetupGenerator[0],
+                #                                         keyboard=SetupGenerator[1],
+                #                                         attachment=SetupGenerator[2]
+                #               )
+                #     logger.debug(f"Added new generator for user. ID:[{event.user_id}]")
+                #     continue
 
                 # Сообщение от пользователя
                 request = event.text.lower()
-                message, keybord, attachment = GenForEachUser_id[event.user_id].send(request)
+                try:
+                    message, keybord, attachment = Handlers.get(request).Start()
+                except AttributeError:
+                    keyboard = VkKeyboard(one_time=True)
+                    keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
+                    message, keybord, attachment = 'ПУСТО', keyboard, ''
+
+
+                # message, keybord, attachment = GenForEachUser_id[event.user_id].send(request)
                 write_msg(vk, event, event.user_id, message, keybord, attachment)
 
 
