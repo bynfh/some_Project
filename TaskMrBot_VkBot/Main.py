@@ -13,6 +13,7 @@ logger.add("VkBot_Bakery.json",
            serialize=True,)
 
 def GetSectionFromDB():
+    '''Достает ВСЕ разделы из БД из таблицы section'''
     with sqlite3.connect('VkBot.db') as Connection:
         cursor = Connection.cursor()
         ListWithSection = []
@@ -23,6 +24,7 @@ def GetSectionFromDB():
         return ListWithSection
 
 def GetProductsFromDB(section):
+    '''Достает ВСЕ продукты из таблицы product'''
     with sqlite3.connect('VkBot.db') as Connection:
         cursor = Connection.cursor()
         ListWithSection = []
@@ -34,133 +36,166 @@ def GetProductsFromDB(section):
             ListWithSection.append(row[0])
         return ListWithSection
 
+
+def GetSecOnProductFromDB(product):
+    '''Достает из БД Имя секции для конкретного продукта'''
+    with sqlite3.connect('VkBot.db') as Connection:
+        cursor = Connection.cursor()
+        ListWithSection = []
+        for row in cursor.execute(f'''SELECT sec.name
+                                      FROM product prod,
+                                           section sec
+                                      WHERE sec.ID_section = prod.ID_section
+                                      AND   lower(prod.name) = "{product.capitalize()}"'''):
+            ListWithSection.append(row[0])
+        return ListWithSection
+
+
 States_t = {}
 def StateStore(request):
-    States_t['меню'] = 0
+    '''Функция для хранения состояний. Выдает предыдущее состояние для текущего'''
+    States_t['меню'] = 'меню'
+    request = request.lower()
     if request in States_t:
+        logger.debug(f'BackState = {States_t[request]}')
         return States_t[request]
     else:
-        FirstState = GetSectionFromDB(request)
-        SecondState = GetProductsFromDB(request)
+        Sections = GetSectionFromDB()
+        for Section in Sections:
+            States_t[Section.lower()] = 'меню'
+        Products = GetProductsFromDB(request)
+        for Product in Products:
+            States_t[Product.lower()] = request
+        if request not in States_t:
+            Section = GetSecOnProductFromDB(request)[0]
+            States_t[request.lower()] = Section
+        logger.debug(f'BackState = {States_t[request]}')
+        return States_t[request]
 
-    States = {}
 
 def write_msg(vk, event, user_id, message, keyboard, attachment):
     vk.method('messages.send', {'user_id': user_id,
                                 'message': message,
                                 'random_id': get_random_id(),
                                 'keyboard': keyboard.get_keyboard(),
-                                'attachment': attachment,})
-    logger.debug(f"Message for user_ID:[{event.user_id}]:{message}")
+                                'attachment': attachment, })
 
-
-def main():
-    Bread = State(Bot_config.MessageSectionBread,
+def SetState():
+    '''Создает объекты по каждой позиции в БД, на выходе словать с handlers'''
+    Bread = State(Bot_config.MsgSectionBread,
                   GetProductsFromDB('хлеб'),
                   Bot_config.PhotoBread,
                   Bot_config.KeyboardBread,
                   )
 
-    WhiteBread = State(Bot_config.MessageBread.get('белый хлеб'),
+    WhiteBread = State(Bot_config.MsgBread.get('белый хлеб'),
                        ['белый хлеб'],
                        Bot_config.PhotoBread.get('белый хлеб'),
                        Bot_config.KeyboardSingleProduct,
                        )
 
-    BrownBread = State(Bot_config.MessageBread.get('ржаной хлеб'),
+    BrownBread = State(Bot_config.MsgBread.get('ржаной хлеб'),
                        ['ржаной хлеб'],
                        Bot_config.PhotoBread.get('ржаной хлеб'),
                        Bot_config.KeyboardSingleProduct,
                        )
-    Pizza = State(Bot_config.MessageSectionPizz,
+    Pizza = State(Bot_config.MsgSectionPizz,
                   GetProductsFromDB('пицца'),
                   Bot_config.PhotoPizzes,
                   Bot_config.KeyboardPizz,
                   )
 
-    Margo = State(Bot_config.MessagePizz.get('маргарита'),
+    Margo = State(Bot_config.MsgPizz.get('маргарита'),
                   ['маргарита'],
                   Bot_config.PhotoPizzes.get('маргарита'),
                   Bot_config.KeyboardSingleProduct,
                   )
 
-    Peper = State(Bot_config.MessagePizz.get('пепперони'),
+    Peper = State(Bot_config.MsgPizz.get('пепперони'),
                   ['пепперони'],
                   Bot_config.PhotoPizzes.get('пепперони'),
                   Bot_config.KeyboardSingleProduct,
                   )
 
-    Bavar = State(Bot_config.MessagePizz.get('баварская'),
+    Bavar = State(Bot_config.MsgPizz.get('баварская'),
                   ['баварская'],
                   Bot_config.PhotoPizzes.get('баварская'),
                   Bot_config.KeyboardSingleProduct,
                   )
 
-    Cake = State(Bot_config.MessageSectionCake,
+    Cake = State(Bot_config.MsgSectionCake,
                  GetProductsFromDB('пироги'),
                  Bot_config.PhotoCake,
                  Bot_config.KeyboardCake)
 
-    Meat = State(Bot_config.MessageCake.get('мясной'),
-                 ['мясной'],
-                 Bot_config.PhotoCake.get('мясной'),
+    Meat = State(Bot_config.MsgCake.get('мясной пирог'),
+                 ['мясной пирог'],
+                 Bot_config.PhotoCake.get('мясной пирог'),
                  Bot_config.KeyboardSingleProduct,
                  )
 
-    Fish = State(Bot_config.MessageCake.get('рыбник'),
+    Fish = State(Bot_config.MsgCake.get('рыбник'),
                  ['рыбник'],
                  Bot_config.PhotoCake.get('рыбник'),
                  Bot_config.KeyboardSingleProduct,
                  )
 
-    Cabbag = State(Bot_config.MessageCake.get('капустный пирог'),
+    Cabbag = State(Bot_config.MsgCake.get('капустный пирог'),
                    ['капустный пирог'],
                    Bot_config.PhotoCake.get('капустный пирог'),
                    Bot_config.KeyboardSingleProduct,
                    )
 
-    Start = State(Bot_config.MessegeForStart,
+    Start = State(Bot_config.MsgStart,
                   GetSectionFromDB(),
-                  Bot_config.PhotoForStart,
+                  Bot_config.PhotoStart,
                   Bot_config.KeyboardStart)
 
-    Handlers = {'меню': Start.GetStateProduct(),
-                'хлеб': Bread.GetStateProduct(),
-                'белый хлеб': WhiteBread.GetStateProduct(),
-                'ржаной хлеб': BrownBread.GetStateProduct(),
-                'пицца': Pizza.GetStateProduct(),
-                'маргарита': Margo.GetStateProduct(),
-                'пепперони': Peper.GetStateProduct(),
-                'баварская': Bavar.GetStateProduct(),
-                'пироги': Cake.GetStateProduct(),
-                'мясной': Meat.GetStateProduct(),
-                'рыбник': Fish.GetStateProduct(),
-                'капустный пирог': Cabbag.GetStateProduct(),
-                'назад': Start.GetStateProduct(),}
+    Handlers = {'меню': Start.GetObject(),
+                'хлеб': Bread.GetObject(),
+                'белый хлеб': WhiteBread.GetObject(),
+                'ржаной хлеб': BrownBread.GetObject(),
+                'пицца': Pizza.GetObject(),
+                'маргарита': Margo.GetObject(),
+                'пепперони': Peper.GetObject(),
+                'баварская': Bavar.GetObject(),
+                'пироги': Cake.GetObject(),
+                'мясной пирог': Meat.GetObject(),
+                'рыбник': Fish.GetObject(),
+                'капустный пирог': Cabbag.GetObject(),
+                'назад': Start.GetObject(), }
+    return Handlers
 
+
+def main():
+    StateForEachUsers = {}
     token = Bot_config.TOKEN
-    # Авторизуемся как сообщество
     vk = vk_api.VkApi(token=token)
     longpoll = VkLongPoll(vk)
-    store = ''
     for event in longpoll.listen():
         # Если пришло новое сообщение
         if event.type == VkEventType.MESSAGE_NEW:
             # Если оно имеет метку для меня( то есть бота)
             if event.to_me:
-                logger.debug(f"We received new message. TEXT:[{event.text.lower()}] ID:[{event.user_id}]")
-
+                # Если для этого пользователя не созданы объекты, то создадим и запишем их в словарь
+                if event.user_id not in StateForEachUsers.keys():
+                    StateForEachUsers[event.user_id] = SetState()
+                    logger.debug(f'We create new objects for ID:[{event.user_id}]')
+                logger.debug(f"We received new message from ID:[{event.user_id}] TEXT:[{event.text.lower()}]")
                 request = event.text.lower()
 
-                try:
-                    if request not in Handlers:
-                        message, keybord, attachment = Handlers.get('меню')
-                    elif request == 'назад':
-                        message, keybord, attachment = Handlers.get(store)
-                    else:
-                        message, keybord, attachment = Handlers.get(request)
-                except Exception as error:
-                    message, keybord, attachment = Handlers.get('меню')
+                if request not in StateForEachUsers[event.user_id]:
+                    logger.debug(f'Request "{request}" not in Handlers')
+                    message, keybord, attachment = StateForEachUsers[event.user_id].get('меню')
+                    StateForEachUsers[event.user_id]['PreviousState'] = StateStore('меню')
+                elif request == 'назад':
+                    logger.debug(f'Request in "назад"')
+                    back = StateForEachUsers[event.user_id]['PreviousState']
+                    message, keybord, attachment = StateForEachUsers[event.user_id].get(back)
+                    StateForEachUsers[event.user_id]['PreviousState'] = StateStore(back)
+                else:
+                    message, keybord, attachment = StateForEachUsers[event.user_id].get(request)
+                    StateForEachUsers[event.user_id]['PreviousState'] = StateStore(request)
 
                 write_msg(vk, event, event.user_id, message, keybord, attachment)
 
@@ -171,3 +206,6 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         logger.error("You stopped program")
+
+
+

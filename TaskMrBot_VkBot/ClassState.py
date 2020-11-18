@@ -1,5 +1,7 @@
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
-class State():
+
+
+class State:
 
     def __init__(self, Message, TypesProduct, PhotoProduct, Keyboard=[]):
         self.Message = Message
@@ -7,7 +9,7 @@ class State():
         self.PhotoProduct = PhotoProduct
         self.Keyboard = Keyboard
 
-    def GetStateProduct(self):
+    def GetObject(self):
         try:
             Message = self.Message
             Photo = self.PhotoProduct
@@ -30,5 +32,3 @@ class State():
         else:
             keyboard.add_button('Меню', color=VkKeyboardColor.POSITIVE)
         return Message, keyboard, attachment
-
-
