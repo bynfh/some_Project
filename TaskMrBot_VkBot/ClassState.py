@@ -1,10 +1,11 @@
 from vk_api.keyboard import VkKeyboard, VkKeyboardColor
 class State():
 
-    def __init__(self, Message, TypesProduct, PhotoProduct):
+    def __init__(self, Message, TypesProduct, PhotoProduct, Keyboard=[]):
         self.Message = Message
         self.TypesProduct = TypesProduct
         self.PhotoProduct = PhotoProduct
+        self.Keyboard = Keyboard
 
     def GetStateProduct(self):
         try:
@@ -19,12 +20,15 @@ class State():
         except AttributeError:
             Message = f'Раздел {self.TypesProduct} настроен не до конца'
             attachment = ''
-        # Добавляем кол-во кнопок сколько позиций в БД + назад
-        TypesProduct = self.TypesProduct
         keyboard = VkKeyboard(one_time=True)
-        for BreadType in TypesProduct:
-            keyboard.add_button(BreadType, color=VkKeyboardColor.POSITIVE)
-        keyboard.add_button('Назад', color=VkKeyboardColor.SECONDARY)
+        if self.Keyboard:
+            for button in self.Keyboard:
+                if button.lower() == 'назад':
+                    keyboard.add_button(button, color=VkKeyboardColor.SECONDARY)
+                else:
+                    keyboard.add_button(button, color=VkKeyboardColor.POSITIVE)
+        else:
+            keyboard.add_button('Меню', color=VkKeyboardColor.POSITIVE)
         return Message, keyboard, attachment
 
 

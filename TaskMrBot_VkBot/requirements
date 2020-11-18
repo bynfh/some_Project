@@ -1,5 +1,0 @@
-Версия питона 3.8 +
-Установить библиотека vk_api (pip3 install vk_api)
-Установить библиотека loguru (pip3 install loguru)
-
-Логи пишутся в VkBot_Bakery.json

@@ -34,13 +34,16 @@ def GetProductsFromDB(section):
             ListWithSection.append(row[0])
         return ListWithSection
 
-PriviousState = ['старт','старт']
-def StateStore(state):
-    if state != PriviousState[1]:
-        PriviousState.append(state)
-    if len(PriviousState) > 2:
-        del PriviousState[0]
-    return PriviousState[0]
+States_t = {}
+def StateStore(request):
+    States_t['меню'] = 0
+    if request in States_t:
+        return States_t[request]
+    else:
+        FirstState = GetSectionFromDB(request)
+        SecondState = GetProductsFromDB(request)
+
+    States = {}
 
 def write_msg(vk, event, user_id, message, keyboard, attachment):
     vk.method('messages.send', {'user_id': user_id,
@@ -52,19 +55,76 @@ def write_msg(vk, event, user_id, message, keyboard, attachment):
 
 
 def main():
-    Bread = State(Bot_config.MessageSectionBread, GetProductsFromDB('хлеб'), Bot_config.PhotoBread)
-    WhiteBread = State(Bot_config.MessageBread.get('белый хлеб'), ['белый хлеб'], Bot_config.PhotoBread.get('белый хлеб'))
-    BrownBread = State(Bot_config.MessageBread.get('ржаной хлеб'), ['ржаной хлеб'], Bot_config.PhotoBread.get('ржаной хлеб'))
-    Pizza = State(Bot_config.MessageSectionPizz, GetProductsFromDB('пицца'), Bot_config.PhotoPizzes)
-    Margo = State(Bot_config.MessagePizz.get('маргарита'), ['маргарита'], Bot_config.PhotoPizzes.get('маргарита'))
-    Peper = State(Bot_config.MessagePizz.get('пепперони'), ['пепперони'], Bot_config.PhotoPizzes.get('пепперони'))
-    Bavar = State(Bot_config.MessagePizz.get('баварская'), ['баварская'], Bot_config.PhotoPizzes.get('баварская'))
-    Cake = State(Bot_config.MessageSectionCake, GetProductsFromDB('пироги'), Bot_config.PhotoCake)
-    Meat = State(Bot_config.MessageCake.get('мясной'), ['мясной'], Bot_config.PhotoCake.get('мясной'))
-    Fish = State(Bot_config.MessageCake.get('рыбник'), ['рыбник'], Bot_config.PhotoCake.get('рыбник'))
-    Cabbag = State(Bot_config.MessageCake.get('капустный пирог'), ['капустный пирог'], Bot_config.PhotoCake.get('капустный пирог'))
-    Start = State(Bot_config.MessegeForStart, GetSectionFromDB(), Bot_config.PhotoForStart)
-    Handlers = {'старт': Start.GetStateProduct(),
+    Bread = State(Bot_config.MessageSectionBread,
+                  GetProductsFromDB('хлеб'),
+                  Bot_config.PhotoBread,
+                  Bot_config.KeyboardBread,
+                  )
+
+    WhiteBread = State(Bot_config.MessageBread.get('белый хлеб'),
+                       ['белый хлеб'],
+                       Bot_config.PhotoBread.get('белый хлеб'),
+                       Bot_config.KeyboardSingleProduct,
+                       )
+
+    BrownBread = State(Bot_config.MessageBread.get('ржаной хлеб'),
+                       ['ржаной хлеб'],
+                       Bot_config.PhotoBread.get('ржаной хлеб'),
+                       Bot_config.KeyboardSingleProduct,
+                       )
+    Pizza = State(Bot_config.MessageSectionPizz,
+                  GetProductsFromDB('пицца'),
+                  Bot_config.PhotoPizzes,
+                  Bot_config.KeyboardPizz,
+                  )
+
+    Margo = State(Bot_config.MessagePizz.get('маргарита'),
+                  ['маргарита'],
+                  Bot_config.PhotoPizzes.get('маргарита'),
+                  Bot_config.KeyboardSingleProduct,
+                  )
+
+    Peper = State(Bot_config.MessagePizz.get('пепперони'),
+                  ['пепперони'],
+                  Bot_config.PhotoPizzes.get('пепперони'),
+                  Bot_config.KeyboardSingleProduct,
+                  )
+
+    Bavar = State(Bot_config.MessagePizz.get('баварская'),
+                  ['баварская'],
+                  Bot_config.PhotoPizzes.get('баварская'),
+                  Bot_config.KeyboardSingleProduct,
+                  )
+
+    Cake = State(Bot_config.MessageSectionCake,
+                 GetProductsFromDB('пироги'),
+                 Bot_config.PhotoCake,
+                 Bot_config.KeyboardCake)
+
+    Meat = State(Bot_config.MessageCake.get('мясной'),
+                 ['мясной'],
+                 Bot_config.PhotoCake.get('мясной'),
+                 Bot_config.KeyboardSingleProduct,
+                 )
+
+    Fish = State(Bot_config.MessageCake.get('рыбник'),
+                 ['рыбник'],
+                 Bot_config.PhotoCake.get('рыбник'),
+                 Bot_config.KeyboardSingleProduct,
+                 )
+
+    Cabbag = State(Bot_config.MessageCake.get('капустный пирог'),
+                   ['капустный пирог'],
+                   Bot_config.PhotoCake.get('капустный пирог'),
+                   Bot_config.KeyboardSingleProduct,
+                   )
+
+    Start = State(Bot_config.MessegeForStart,
+                  GetSectionFromDB(),
+                  Bot_config.PhotoForStart,
+                  Bot_config.KeyboardStart)
+
+    Handlers = {'меню': Start.GetStateProduct(),
                 'хлеб': Bread.GetStateProduct(),
                 'белый хлеб': WhiteBread.GetStateProduct(),
                 'ржаной хлеб': BrownBread.GetStateProduct(),
@@ -94,16 +154,14 @@ def main():
 
                 try:
                     if request not in Handlers:
-                        message, keybord, attachment = Handlers.get('старт')
+                        message, keybord, attachment = Handlers.get('меню')
                     elif request == 'назад':
                         message, keybord, attachment = Handlers.get(store)
                     else:
                         message, keybord, attachment = Handlers.get(request)
                 except Exception as error:
-                    message, keybord, attachment = Handlers.get('старт')
+                    message, keybord, attachment = Handlers.get('меню')
 
-
-                store = StateStore(request)
                 write_msg(vk, event, event.user_id, message, keybord, attachment)
 
 
