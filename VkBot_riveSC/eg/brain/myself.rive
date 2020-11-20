@@ -1,61 +1,54 @@
-// Tell the user stuff about ourself.
++ *
+- {"msg":"Теперь Вы в разделе Меню!",
+    ^"photo":"<bot photo_menu>",
+    ^"keyboard":"<bot keyb_menu>"}{topic=menu}
+//-------------------------------------------------------------------------------------------------
+> topic menu
+    + [*] хлеб [*]
+    - {"msg":"Теперь Вы в разделе Хлеб!",
+        ^"photo":"<bot photo_bread>",
+        ^"keyboard":"<bot keyb_bread>"}{topic=bread}
 
-+ <bot name>
-- Yes?
+    + *
+    - Выберите одно из предложенного, пожалуйста.
 
-+ <name> *
-- Yes? {@<star>}
+< topic
+//-------------------------------------------------------------------------------------------------
+> topic bread
 
-+ asl
-- <bot name>/<bot sex>/<bot location>
+    + [*] белый хлеб [*]
+    - {"msg":"Теперь Вы в разделе Белый хлеб!",
+        ^"photo":"<bot photo_white_bread>",
+        ^"keyboard":"<bot keyb_white_bread>"}{topic=single_bread}
 
-+ (what is your name|who are you|who is this)
-- I am <bot name>.
-- You can call me <bot name>.
+    + [*] Ржаной хлеб [*]
+    - {"msg":"Теперь Вы в разделе Ржаной хлеб!",
+        ^"photo":"<bot photo_brown_bread>",
+        ^"keyboard":"<bot keyb_brown_bread>"}{topic=single_bread}
 
-+ how old are you
-- I'm <bot age> years old.
-- I'm <bot age>.
+    + [*] назад [*]
+    - {"msg":"Теперь Вы в разделе Меню!",
+        ^"photo":"<bot photo_menu>",
+        ^"keyboard":"<bot keyb_menu>"}{topic=menu}
 
-+ are you a (@malenoun) or a (@femalenoun)
-- I'm a <bot sex>.
+    + *
+    - Выберите одно из предложенного, пожалуйста.
 
-+ are you (@malenoun) or (@femalenoun)
-- I'm a <bot sex>.
+< topic
+//-------------------------------------------------------------------------------------------------
+> topic single_bread
 
-+ where (are you|are you from|do you live)
-- I'm from <bot location>.
+    + [*] меню [*]
+    - {"msg":"Теперь Вы в разделе Меню!",
+    ^"photo":"<bot photo_menu>",
+    ^"keyboard":"<bot keyb_menu>"}{topic=menu}
 
-+ what (city|town) (are you from|do you live in)
-- I'm in <bot city>.
+    + [*] назад [*]
+    - {"msg":"Теперь Вы в разделе Хлеб!",
+        ^"photo":"<bot photo_bread>",
+        ^"keyboard":"<bot keyb_bread>"}{topic=bread}
+    + *
+    - Выберите одно из предложенного, пожалуйста.
 
-+ what is your favorite color
-- Definitely <bot color>.
-
-+ what is your favorite band
-- I like <bot band> the most.
-
-+ what is your favorite book
-- The best book I've read was <bot book>.
-
-+ what is your occupation
-- I'm a <bot job>.
-
-+ where is your (website|web site|site)
-- <bot website>
-
-+ what color are your eyes
-- I have <bot eyes> eyes.
-- {sentence}<bot eyes>{/sentence}.
-
-+ what do you look like
-- I have <bot eyes> eyes and <bot hairlen> <bot hair> hair.
-
-+ what do you do
-- I'm a <bot job>.
-
-+ who is your favorite author
-- <bot author>.
-
-+ who is your master
-- <bot master>.
+< topic
+//-------------------------------------------------------------------------------------------------

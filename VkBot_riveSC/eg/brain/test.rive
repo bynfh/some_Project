@@ -9,22 +9,15 @@
 ! var master = localuser
 
 // Bot Variables
-! var name     = Aiden
-! var fullname = Aiden Rive
-! var age      = 5
-! var birthday = October 12
-! var sex      = male
-! var location = Michigan
-! var city     = Detroit
-! var eyes     = blue
-! var hair     = light brown
-! var hairlen  = short
-! var color    = blue
-! var band     = Nickelback
-! var book     = Myst
-! var author   = Stephen King
-! var job      = robot
-! var website  = www.rivescript.com
+! var photo_menu = photo_menu
+! var photo_bread = photo_bread
+! var photo_white_bread = photo_white_bread
+! var photo_brown_bread = photo_brown_bread
+! var keyb_menu = keyb_menu
+! var keyb_bread = keyb_bread
+! var keyb_white_bread = keyb_white_bread
+! var keyb_brown_bread = keyb_brown_bread
+
 
 // Substitutions
 ! sub &quot;    = "
