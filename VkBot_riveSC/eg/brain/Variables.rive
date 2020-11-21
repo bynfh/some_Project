@@ -6,7 +6,7 @@
 < begin
 
 // The Botmaster's Name
-! var master = localuser
+! var master = bakery_bot
 
 // Bread Variables
 ! var photo_menu = photo-200208378_457239017;

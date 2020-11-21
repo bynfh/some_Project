@@ -67,7 +67,7 @@
         ^"photo":"<bot photo_bread>",
         ^"keyboard":"<bot keyb_bread>"}{topic=bread}
     + *
-    - {"msg":"Выберети одно из предложенного!",
+    - {"msg":"Выберите одно из предложенного!",
       ^"photo":"<bot photo_bread>",
       ^"keyboard":"<bot keyb_bread>"}{topic=bread}
 
@@ -116,7 +116,7 @@
         ^"photo":"<bot photo_pizz>",
         ^"keyboard":"<bot keyb_pizz>"}{topic=pizz}
     + *
-    - {"msg":"Выберети одно из предложенного!",
+    - {"msg":"Выберите одно из предложенного!",
       ^"photo":"<bot photo_pizz>",
       ^"keyboard":"<bot keyb_pizz>"}{topic=pizz}
 
@@ -165,7 +165,7 @@
         ^"photo":"<bot photo_cake>",
         ^"keyboard":"<bot keyb_cake>"}{topic=cake}
     + *
-    - {"msg":"Выберети одно из предложенного!",
+    - {"msg":"Выберите одно из предложенного!",
       ^"photo":"<bot photo_cake>",
       ^"keyboard":"<bot keyb_cake>"}{topic=cake}
 
