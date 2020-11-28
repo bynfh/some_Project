@@ -1,0 +1,36 @@
+Instuction DJANGO
+
+VENV
+
+install python3 -m venv /home/oleg/venv/test
+
+run
+source home/oleg/venv/test/bin/activate
+deactivate
+
+pip freeze > requirements.txt
+pip install -r requirements.txt
+
+INSTALL
+
+Install virtual environment in pycharm.
+Go to the directory with our project and execute command:
+	django-admin startproject InternetStore .
+
+FIRST MEET
+
+InternetStore/settings.py 
+TIME_ZONE = 'Europe/Moscow'
+LANGUAGE_CODE = 'ru-ru'
+
+after STATIC_URL = '/static/' add:
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+Create DB 
+python manage.py migrate 
+this command need, than python from environment and manage.py path need where your current project.
+
+python manage.py runserver
+For start server
+
+
