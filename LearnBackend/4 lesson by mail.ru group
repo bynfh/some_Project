@@ -16,7 +16,7 @@ cascading style sheets
 Есть несколько версий CSS
 weight,height -размеры элемента
 margin,padding -границы элемента
-display,visibilyty - режим отображения
+display,visibility - режим отображения
 background -фон элемента
 font -управления шрифтом
 
