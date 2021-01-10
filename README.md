@@ -1,4 +1,4 @@
 # All_Project
-This repository include all projects by Markov Oleg
+This repository include a few project. It was before i started divide repositories
 
 
