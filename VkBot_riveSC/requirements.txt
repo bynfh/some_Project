@@ -5,5 +5,5 @@ loguru==0.5.3
 requests==2.25.0
 rivescript==1.15.0
 six==1.15.0
-urllib3==1.26.2
+urllib3==1.26.3
 vk-api==11.9.0
